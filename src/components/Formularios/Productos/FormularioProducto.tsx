@@ -401,14 +401,7 @@ const FormularioProductoInterno: React.FC = () => {
             />
           </div>
 
-          <SelectField
-            label="Proveedores"
-            name="proveedor"
-            options={proveedores}
-            onChange={(selectedOptions) => setProducto(prev => ({ ...prev, proveedores: selectedOptions.map((option: Option) => option.value) }))}
-            placeholder="Seleccione uno o más proveedores"
-            isMulti
-          />
+          
 
           <Switch
             checked={producto.estado}

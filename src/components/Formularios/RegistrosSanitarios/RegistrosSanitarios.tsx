@@ -1,6 +1,31 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { SearchIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
+// Definición de tipos
+interface RegistroSanitario {
+  uuid: string;
+  number_registry: string;
+  expiration_date: string;
+  cluster: string;
+  status: string;
+  type_risk: string;
+  file_name: string;
+  created_at: string;
+  update_at: string;
+  delete_at: string | null;
+}
+
+interface RegistroSanitarioInput {
+  number_registry: string;
+  expiration_date: string;
+  cluster: string;
+  status: string;
+  type_risk: string;
+  file_name: string;
+  file_content: string;
+}
+
+// Componentes de UI
 const Input = ({ label, ...props }) => (
   <div className="mb-4">
     <label className="block text-sm font-bold mb-2" htmlFor={props.id}>{label}</label>
@@ -29,85 +54,185 @@ const Button = ({ children, className, ...props }) => (
   </button>
 )
 
-export default function RegistroSanitario() {
-  const [marcas, setMarcas] = useState([])
-  const [formData, setFormData] = useState({
-    id: null,
-    numero: '',
-    fechaVencimiento: '',
-    grupo: '',
-    tipoRiesgo: '',
-    estado: '',
-    archivo: null
+// Funciones de API
+const API_URL = 'http://localhost:8080/api/sanitary-registry';
+
+async function fetchRegistrosSanitarios(): Promise<RegistroSanitario[]> {
+  const response = await fetch(API_URL);
+  if (!response.ok) {
+    throw new Error('Error al obtener los registros sanitarios');
+  }
+  const data = await response.json();
+  if (!data.success || !Array.isArray(data.data)) {
+    throw new Error('La respuesta del servidor no es válida');
+  }
+  return data.data;
+}
+
+async function createRegistroSanitario(registro: RegistroSanitarioInput): Promise<RegistroSanitario> {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(registro),
+  });
+  if (!response.ok) {
+    throw new Error('Error al crear el registro sanitario');
+  }
+  const data = await response.json();
+  if (!data.success || !data.data) {
+    throw new Error('La respuesta del servidor no es válida');
+  }
+  return data.data;
+}
+
+async function updateRegistroSanitario(uuid: string, registro: Partial<RegistroSanitarioInput>): Promise<RegistroSanitario> {
+  const response = await fetch(`${API_URL}/${uuid}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(registro),
+  });
+  if (!response.ok) {
+    throw new Error('Error al actualizar el registro sanitario');
+  }
+  const data = await response.json();
+  if (!data.success || !data.data) {
+    throw new Error('La respuesta del servidor no es válida');
+  }
+  return data.data;
+}
+
+async function deleteRegistroSanitario(uuid: string): Promise<void> {
+  const response = await fetch(`${API_URL}/${uuid}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Error al eliminar el registro sanitario');
+  }
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error('Error al eliminar el registro sanitario');
+  }
+}
+
+// Componente principal
+export default function RegistroSanitarioComponent() {
+  const [registros, setRegistros] = useState<RegistroSanitario[]>([])
+  const [formData, setFormData] = useState<RegistroSanitarioInput>({
+    number_registry: '',
+    expiration_date: '',
+    cluster: '',
+    status: '',
+    type_risk: '',
+    file_name: '',
+    file_content: '',
   })
-  const [editando, setEditando] = useState(false)
+  const [editando, setEditando] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const itemsPerPage = 4
 
-  const handleInputChange = (e) => {
+  useEffect(() => {
+    fetchRegistrosSanitarios()
+      .then(setRegistros)
+      .catch(err => {
+        console.error('Error fetching registros:', err);
+        setError('Error al cargar los registros sanitarios. Por favor, intente de nuevo más tarde.');
+      });
+  }, [])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleFileChange = (e) => {
-    setFormData(prev => ({ ...prev, archivo: e.target.files[0] }))
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData(prev => ({
+          ...prev,
+          file_name: file.name,
+          file_content: base64String.split(',')[1] // Remove data:application/pdf;base64, from the string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (editando) {
-      setMarcas(marcas.map(marca => 
-        marca.id === formData.id ? { ...formData, archivo: formData.archivo ? formData.archivo.name : marca.archivo } : marca
-      ))
-      setEditando(false)
-    } else {
-      const nuevoId = marcas.length > 0 ? Math.max(...marcas.map(m => m.id)) + 1 : 1
-      const nuevoRegistro = {
-        ...formData,
-        id: nuevoId,
-        archivo: formData.archivo ? formData.archivo.name : null
+    try {
+      if (editando) {
+        const updatedRegistro = await updateRegistroSanitario(editando, formData)
+        setRegistros(registros.map(r => r.uuid === editando ? updatedRegistro : r))
+        setEditando(null)
+      } else {
+        const newRegistro = await createRegistroSanitario(formData)
+        setRegistros([...registros, newRegistro])
       }
-      setMarcas(prev => [...prev, nuevoRegistro])
+      resetForm()
+    } catch (error) {
+      console.error('Error al guardar el registro:', error)
+      setError('Error al guardar el registro. Por favor, intente de nuevo.')
     }
-    resetForm()
   }
 
   const resetForm = () => {
     setFormData({
-      id: null,
-      numero: '',
-      fechaVencimiento: '',
-      grupo: '',
-      tipoRiesgo: '',
-      estado: '',
-      archivo: null
+      number_registry: '',
+      expiration_date: '',
+      cluster: '',
+      status: '',
+      type_risk: '',
+      file_name: '',
+      file_content: '',
     })
   }
 
-  const iniciarEdicion = (marca) => {
-    setFormData(marca)
-    setEditando(true)
+  const iniciarEdicion = (registro: RegistroSanitario) => {
+    setFormData({
+      number_registry: registro.number_registry,
+      expiration_date: registro.expiration_date,
+      cluster: registro.cluster,
+      status: registro.status,
+      type_risk: registro.type_risk,
+      file_name: registro.file_name,
+      file_content: '', // We don't have the file content when editing
+    })
+    setEditando(registro.uuid)
   }
 
-  const eliminarRegistro = (id) => {
-    setMarcas(marcas.filter(marca => marca.id !== id))
+  const eliminarRegistro = async (uuid: string) => {
+    try {
+      await deleteRegistroSanitario(uuid)
+      setRegistros(registros.filter(registro => registro.uuid !== uuid))
+    } catch (error) {
+      console.error('Error al eliminar el registro:', error)
+      setError('Error al eliminar el registro. Por favor, intente de nuevo.')
+    }
   }
 
-  const filteredMarcas = marcas.filter(marca =>
-    marca.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    marca.grupo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    marca.estado.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRegistros = registros.filter(registro =>
+    registro.number_registry.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    registro.cluster.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    registro.status.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const totalPages = Math.ceil(filteredMarcas.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredRegistros.length / itemsPerPage)
   const pageNumbers = Array.from({ length: Math.min(4, totalPages) }, (_, i) => i + 1)
 
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredMarcas.slice(indexOfFirstItem, indexOfLastItem)
+  const currentItems = filteredRegistros.slice(indexOfFirstItem, indexOfLastItem)
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber)
 
   return (
     <div className="flex h-screen bg-[#eeeeee]">
@@ -119,67 +244,59 @@ export default function RegistroSanitario() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Número del registro"
-            id="numero"
-            name="numero"
-            value={formData.numero}
+            id="number_registry"
+            name="number_registry"
+            value={formData.number_registry}
             onChange={handleInputChange}
             placeholder="Ingrese el número de registro"
           />
           <Input
             label="Fecha de vencimiento"
-            id="fechaVencimiento"
-            name="fechaVencimiento"
+            id="expiration_date"
+            name="expiration_date"
             type="date"
-            value={formData.fechaVencimiento}
+            value={formData.expiration_date}
             onChange={handleInputChange}
           />
           <Select
             label="Grupo"
-            id="grupo"
-            name="grupo"
-            value={formData.grupo}
+            id="cluster"
+            name="cluster"
+            value={formData.cluster}
             onChange={handleInputChange}
             options={[
-              { value: "Medicamentos", label: "Medicamentos" },
-              { value: "Cosmeticos", label: "Cosméticos" },
-              { value: "Odontologicos", label: "Odontológicos" },
-              { value: "Medico Quirurgicos", label: "Médico Quirúrgicos" },
-              { value: "Aseo y Limpieza", label: "Aseo y Limpieza" },
-              { value: "Reactivo Diagnostico", label: "Reactivo Diagnóstico" },
-              { value: "Homeopaticos", label: "Homeopáticos" },
-              { value: "Suplemento dietario", label: "Suplemento dietario" },
-              { value: "Fitoterapeutico", label: "Fitoterapéutico" },
-              { value: "Biologicos", label: "Biológicos" }
+              { value: "Chemical Products", label: "Productos Químicos" },
+              { value: "Food Products", label: "Productos Alimenticios" },
+              // Add more options as needed
             ]}
           />
           <Input
             label="Tipo de riesgo"
-            id="tipoRiesgo"
-            name="tipoRiesgo"
-            value={formData.tipoRiesgo}
+            id="type_risk"
+            name="type_risk"
+            value={formData.type_risk}
             onChange={handleInputChange}
             placeholder="Ingrese el tipo de riesgo"
           />
           <Select
             label="Estado del registro"
-            id="estado"
-            name="estado"
-            value={formData.estado}
+            id="status"
+            name="status"
+            value={formData.status}
             onChange={handleInputChange}
             options={[
-              { value: "Vigente", label: "Vigente" },
-              { value: "Vencido", label: "Vencido" },
-              { value: "Suspendido", label: "Suspendido" },
-              { value: "Cancelado", label: "Cancelado" },
-              { value: "En Trámite de Renovación", label: "En Trámite de Renovación" }
+              { value: "Active", label: "Activo" },
+              { value: "Inactive", label: "Inactivo" },
+              // Add more options as needed
             ]}
           />
           <Input
-            label="Cargue de archivo"
-            id="archivo"
-            name="archivo"
+            label="Cargar archivo"
+            id="file"
+            name="file"
             type="file"
             onChange={handleFileChange}
+            accept=".pdf,.doc,.docx"
           />
           <div className="w-full">
             <Button type="submit" className="w-full bg-[#FFD700] text-[#00632C] hover:bg-[#80C68C]">
@@ -208,79 +325,81 @@ export default function RegistroSanitario() {
         </div>
 
         <div className="space-y-4">
-          {currentItems.map((marca) => (
-            <div key={marca.id} className="bg-white p-4 rounded-lg shadow">
-              <div className="space-y-2">
-                <p className="font-bold text-[#00632C]">Número: {marca.numero}</p>
-                <p className="text-[#333333]">Fecha de vencimiento: {marca.fechaVencimiento}</p>
-                <p className="text-[#333333]">Grupo: {marca.grupo}</p>
-                <p className="text-[#333333]">Tipo de riesgo: {marca.tipoRiesgo}</p>
-                <p className="text-[#333333]">Estado: {marca.estado}</p>
-                <div className="flex justify-between items-center mt-2">
-                  {marca.archivo ? (
-                    <a
-                      href={`/archivos/${marca.archivo}`}
-                      className="text-[#00632C] hover:underline inline-block"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Ver archivo adjunto
-                    </a>
-                  ) : (
-                    <span className="text-gray-400">Sin archivo adjunto</span>
-                  )}
-                  <div className="flex space-x-2">
-                    <button onClick={() => iniciarEdicion(marca)} className="bg-[#00632C] hover:bg-[#00632C]/80 text-white p-2 rounded">
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => eliminarRegistro(marca.id)} className="bg-red-600 hover:bg-red-700 text-white p-2 rounded">
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+          {error ? (
+            <div className="text-red-500 text-center p-4">{error}</div>
+          ) : (
+            currentItems.map((registro) => (
+              <div key={registro.uuid} className="bg-white p-4 rounded-lg shadow">
+                <div className="space-y-2">
+                  <p className="font-bold text-[#00632C]">Número de registro: {registro.number_registry}</p>
+                  <p className="text-[#333333]">Fecha de vencimiento: {registro.expiration_date}</p>
+                  <p className="text-[#333333]">Grupo: {registro.cluster}</p>
+                  <p className="text-[#333333]">Tipo de riesgo: {registro.type_risk}</p>
+                  <p className="text-[#333333]">Estado: {registro.status}</p>
+                  <div className="flex justify-between items-center mt-2">
+                    {registro.file_name ? (
+                      <span className="text-[#00632C]">
+                        Archivo: {registro.file_name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">Sin archivo adjunto</span>
+                    )}
+                    <div className="flex space-x-2">
+                      <button onClick={() => iniciarEdicion(registro)} className="bg-[#00632C] hover:bg-[#00632C]/80 text-white p-2 rounded">
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => eliminarRegistro(registro.uuid)} className="bg-red-600 hover:bg-red-700 text-white p-2 rounded">
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Paginación */}
-        <div className="flex justify-center items-center space-x-2 mt-4">
-          <button
-            onClick={() => paginate(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 px-4 py-2 rounded-md disabled:opacity-50"
-          >
-            <ChevronLeftIcon className="h-4 w-4" />
-          </button>
-          {pageNumbers.map((number) => (
+        {!error && (
+          <div className="flex justify-center items-center space-x-2 mt-4">
             <button
-              key={number}
-              onClick={() => paginate(number)}
-              className={`px-4 py-2 rounded-md ${currentPage === number ? 'bg-[#00632C] text-white' : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-100'}`}
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 px-4 py-2rounded-md disabled:opacity-50"
             >
-              {number}
+              <ChevronLeftIcon className="h-4 w-4" />
             </button>
-          ))}
-          {totalPages > 4 && currentPage < totalPages - 2 && (
-            <>
-              <span>...</span>
+            {pageNumbers.map((number) => (
               <button
-                onClick={() => paginate(totalPages)}
-                className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-[#00632C] text-white' : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-100'}`}
+                key={number}
+                onClick={() => paginate(number)}
+                className={`px-4 py-2 rounded-md ${currentPage === number ? 'bg-[#00632C] text-white' : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-100'}`}
               >
-                {totalPages}
+                {number}
               </button>
-            </>
-          )}
-          <button
-            onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 px-4 py-2 rounded-md disabled:opacity-50"
-          >
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
-        </div>
+            ))}
+            {totalPages > 4 && currentPage < totalPages - 2 && (
+              <>
+                <span>...</span>
+                <button
+                  onClick={() => paginate(totalPages)}
+                  className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-[#00632C] text-white' : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-100'}`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 px-4 py-2 rounded-md disabled:opacity-50"
+            >
+              <ChevronRightIcon className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
