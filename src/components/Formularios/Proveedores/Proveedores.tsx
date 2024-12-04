@@ -1,14 +1,41 @@
 import React, { useState, useRef, useEffect } from 'react'
 
+type Brand = {
+  uuid: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 type Proveedor = {
-  id: number;
-  empresa: string;
-  tipoPersona: string;
+  uuid: string;
+  name: string;
+  represent: string;
+  type_person: string;
   nit: string;
-  asesor: string;
-  telefono: string;
+  phone: string;
   email: string;
-  marcas: string[];
+  brands: Brand[];
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+type ApiResponse = {
+  data: Proveedor | Proveedor[];
+  success: boolean;
+  response: string;
+}
+
+const emptyFormData = {
+  name: '',
+  represent: '',
+  type_person: '',
+  nit: '',
+  phone: '',
+  email: '',
+  brands: [] as string[],
 }
 
 const marcasDisponibles = [
@@ -16,26 +43,20 @@ const marcasDisponibles = [
   "Otra Marca 1", "Otra Marca 2", "Otra Marca 3", "Otra Marca 4", "Otra Marca 5",
 ]
 
-const emptyFormData: Omit<Proveedor, 'id'> = {
-  empresa: '',
-  tipoPersona: '',
-  nit: '',
-  asesor: '',
-  telefono: '',
-  email: '',
-  marcas: [],
-}
-
 export default function RegistroProveedores() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
-  const [formData, setFormData] = useState<Omit<Proveedor, 'id'>>(emptyFormData)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [formData, setFormData] = useState(emptyFormData)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [searchTermProveedores, setSearchTermProveedores] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const proveedoresPorPagina = 4
+
+  useEffect(() => {
+    fetchProveedores()
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -47,49 +68,110 @@ export default function RegistroProveedores() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  const fetchProveedores = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/provider')
+      const data: ApiResponse = await response.json()
+      if (data.success && Array.isArray(data.data)) {
+        setProveedores(data.data)
+      } else {
+        console.error('Failed to fetch providers:', data.response)
+      }
+    } catch (error) {
+      console.error('Error fetching providers:', error)
+    }
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleMarcaSelect = (marca: string) => {
-    if (!formData.marcas.includes(marca)) {
-      setFormData(prev => ({ ...prev, marcas: [...prev.marcas, marca] }))
+    if (!formData.brands.includes(marca)) {
+      setFormData(prev => ({ ...prev, brands: [...prev.brands, marca] }))
     }
     setSearchTerm('')
   }
 
   const handleRemoveMarca = (marca: string) => {
-    setFormData(prev => ({ ...prev, marcas: prev.marcas.filter(m => m !== marca) }))
+    setFormData(prev => ({ ...prev, brands: prev.brands.filter(m => m !== marca) }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (editingId !== null) {
-      setProveedores(prev => prev.map(p => p.id === editingId ? { ...formData, id: editingId } : p))
-      setEditingId(null)
-    } else {
-      setProveedores(prev => [...prev, { id: Date.now(), ...formData }])
+    const providerData = {
+      name: formData.name,
+      represent: formData.represent,
+      type_person: formData.type_person,
+      nit: formData.nit,
+      phone: formData.phone,
+      email: formData.email,
+      brands: formData.brands.map(marca => ({ name: marca }))
     }
-    setFormData(emptyFormData)
+
+    try {
+      const url = editingId 
+        ? `http://localhost:8080/api/provider/${editingId}`
+        : 'http://localhost:8080/api/provider'
+      const method = editingId ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(providerData),
+      })
+      const data: ApiResponse = await response.json()
+      if (data.success) {
+        fetchProveedores()
+        setFormData(emptyFormData)
+        setEditingId(null)
+      } else {
+        console.error('Failed to save provider:', data.response)
+      }
+    } catch (error) {
+      console.error('Error saving provider:', error)
+    }
   }
 
-  const handleDelete = (id: number) => {
-    setProveedores(prev => prev.filter(proveedor => proveedor.id !== id))
+  const handleDelete = async (uuid: string) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/provider/${uuid}`, {
+        method: 'DELETE',
+      })
+      const data: ApiResponse = await response.json()
+      if (data.success) {
+        fetchProveedores()
+      } else {
+        console.error('Failed to delete provider:', data.response)
+      }
+    } catch (error) {
+      console.error('Error deleting provider:', error)
+    }
   }
 
   const handleEdit = (proveedor: Proveedor) => {
-    setFormData(proveedor)
-    setEditingId(proveedor.id)
+    setFormData({
+      name: proveedor.name,
+      represent: proveedor.represent,
+      type_person: proveedor.type_person,
+      nit: proveedor.nit,
+      phone: proveedor.phone,
+      email: proveedor.email,
+      brands: proveedor.brands.map(brand => brand.name),
+    })
+    setEditingId(proveedor.uuid)
   }
 
   const filteredMarcas = marcasDisponibles.filter(marca =>
-    marca.toLowerCase().includes(searchTerm.toLowerCase()) && !formData.marcas.includes(marca)
+    marca.toLowerCase().includes(searchTerm.toLowerCase()) && !formData.brands.includes(marca)
   )
 
   const filteredProveedores = proveedores.filter(proveedor =>
-    proveedor.empresa.toLowerCase().includes(searchTermProveedores.toLowerCase()) ||
-    proveedor.asesor.toLowerCase().includes(searchTermProveedores.toLowerCase()) ||
+    proveedor.name.toLowerCase().includes(searchTermProveedores.toLowerCase()) ||
+    proveedor.represent.toLowerCase().includes(searchTermProveedores.toLowerCase()) ||
     proveedor.email.toLowerCase().includes(searchTermProveedores.toLowerCase())
   )
 
@@ -119,29 +201,40 @@ export default function RegistroProveedores() {
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="empresa" className="block text-sm font-bold text-[#333333]">Nombre de la empresa</label>
+            <label htmlFor="name" className="block text-sm font-bold text-[#333333]">Nombre de la empresa</label>
             <input
-              id="empresa"
-              name="empresa"
-              value={formData.empresa}
+              id="name"
+              name="name"
+              value={formData.name}
               onChange={handleInputChange}
               className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
               required
             />
           </div>
           <div>
-            <label htmlFor="tipoPersona" className="block text-sm font-bold text-[#333333]">Tipo de persona</label>
+            <label htmlFor="represent" className="block text-sm font-bold text-[#333333]">Nombre del representante</label>
+            <input
+              id="represent"
+              name="represent"
+              value={formData.represent}
+              onChange={handleInputChange}
+              className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="type_person" className="block text-sm font-bold text-[#333333]">Tipo de persona</label>
             <select
-              id="tipoPersona"
-              name="tipoPersona"
-              value={formData.tipoPersona}
+              id="type_person"
+              name="type_person"
+              value={formData.type_person}
               onChange={handleInputChange}
               className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
               required
             >
-              <option value="">Seleccione un tipo</option>
-              <option value="natural">Persona Natural</option>
-              <option value="juridica">Persona Jurídica</option>
+              <option value="">Seleccione...</option>
+              <option value="persona juridica">Persona Jurídica</option>
+              <option value="persona natural">Persona Natural</option>
             </select>
           </div>
           <div>
@@ -156,22 +249,11 @@ export default function RegistroProveedores() {
             />
           </div>
           <div>
-            <label htmlFor="asesor" className="block text-sm font-bold text-[#333333]">Nombre de la asesora comercial</label>
+            <label htmlFor="phone" className="block text-sm font-bold text-[#333333]">Teléfono</label>
             <input
-              id="asesor"
-              name="asesor"
-              value={formData.asesor}
-              onChange={handleInputChange}
-              className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="telefono" className="block text-sm font-bold text-[#333333]">Teléfono</label>
-            <input
-              id="telefono"
-              name="telefono"
-              value={formData.telefono}
+              id="phone"
+              name="phone"
+              value={formData.phone}
               onChange={handleInputChange}
               className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
               required
@@ -190,10 +272,10 @@ export default function RegistroProveedores() {
             />
           </div>
           <div className="relative" ref={dropdownRef}>
-            <label htmlFor="marcas" className="block text-sm font-bold text-[#333333]">Marcas</label>
+            <label htmlFor="brands" className="block text-sm font-bold text-[#333333]">Marcas</label>
             <input
-              id="marcas"
-              name="marcas"
+              id="brands"
+              name="brands"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setIsDropdownOpen(true)}
@@ -215,7 +297,7 @@ export default function RegistroProveedores() {
             )}
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
-            {formData.marcas.map((marca) => (
+            {formData.brands.map((marca) => (
               <span key={marca} className="bg-[#80C68C] text-[#00632C] px-2 py-1 rounded-full text-sm flex items-center">
                 {marca}
                 <button
@@ -254,16 +336,16 @@ export default function RegistroProveedores() {
         </div>
         <div className="space-y-4">
           {currentProveedores.map(proveedor => (
-            <div key={proveedor.id} className="bg-white rounded-lg shadow-md p-4">
+            <div key={proveedor.uuid} className="bg-white rounded-lg shadow-md p-4">
               <div className="flex justify-between">
                 <div className="space-y-2 flex-grow">
-                  <h3 className="text-2xl font-bold text-[#00632C]">{proveedor.empresa}</h3>
-                  <p className="text-[#333333]"><strong>Tipo de persona:</strong> {proveedor.tipoPersona === 'natural' ? 'Persona Natural' : 'Persona Jurídica'}</p>
+                  <h3 className="text-2xl font-bold text-[#00632C]">{proveedor.name}</h3>
+                  <p className="text-[#333333]"><strong>Representante:</strong> {proveedor.represent}</p>
+                  <p className="text-[#333333]"><strong>Tipo de persona:</strong> {proveedor.type_person}</p>
                   <p className="text-[#333333]"><strong>NIT:</strong> {proveedor.nit}</p>
-                  <p className="text-[#333333]"><strong>Asesor comercial:</strong> {proveedor.asesor}</p>
-                  <p className="text-[#333333]"><strong>Teléfono:</strong> {proveedor.telefono}</p>
+                  <p className="text-[#333333]"><strong>Teléfono:</strong> {proveedor.phone}</p>
                   <p className="text-[#333333]"><strong>Email:</strong> {proveedor.email}</p>
-                  <p className="text-[#333333]"><strong>Marcas:</strong> {proveedor.marcas.join(', ')}</p>
+                  <p className="text-[#333333]"><strong>Marcas:</strong> {proveedor.brands.map(brand => brand.name).join(', ')}</p>
                 </div>
                 <div className="flex flex-col justify-end space-y-2 ml-4">
                   <button
@@ -277,7 +359,7 @@ export default function RegistroProveedores() {
                   </button>
                   <button
                     className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition duration-300"
-                    onClick={() => handleDelete(proveedor.id)}
+                    onClick={() => handleDelete(proveedor.uuid)}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor">
@@ -329,3 +411,4 @@ export default function RegistroProveedores() {
     </div>
   )
 }
+

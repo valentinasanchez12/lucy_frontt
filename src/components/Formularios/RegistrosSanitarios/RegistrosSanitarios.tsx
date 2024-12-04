@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { SearchIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { SearchIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react'
 
 // Definición de tipos
 interface RegistroSanitario {
   uuid: string;
+  url: string;
   number_registry: string;
   expiration_date: string;
   cluster: string;
   status: string;
   type_risk: string;
-  file_name: string;
   created_at: string;
-  update_at: string;
-  delete_at: string | null;
+  updated_at: string;
+  deleted_at: string | null;
 }
 
 interface RegistroSanitarioInput {
@@ -134,7 +134,7 @@ export default function RegistroSanitarioComponent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const itemsPerPage = 4
+  const itemsPerPage = 3
 
   useEffect(() => {
     fetchRegistrosSanitarios()
@@ -168,13 +168,20 @@ export default function RegistroSanitarioComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const lowercaseFormData = {
+      ...formData,
+      number_registry: formData.number_registry.toLowerCase(),
+      cluster: formData.cluster.toLowerCase(),
+      status: formData.status.toLowerCase(),
+      type_risk: formData.type_risk.toLowerCase(),
+    }
     try {
       if (editando) {
-        const updatedRegistro = await updateRegistroSanitario(editando, formData)
+        const updatedRegistro = await updateRegistroSanitario(editando, lowercaseFormData)
         setRegistros(registros.map(r => r.uuid === editando ? updatedRegistro : r))
         setEditando(null)
       } else {
-        const newRegistro = await createRegistroSanitario(formData)
+        const newRegistro = await createRegistroSanitario(lowercaseFormData)
         setRegistros([...registros, newRegistro])
       }
       resetForm()
@@ -203,8 +210,8 @@ export default function RegistroSanitarioComponent() {
       cluster: registro.cluster,
       status: registro.status,
       type_risk: registro.type_risk,
-      file_name: registro.file_name,
-      file_content: '', // We don't have the file content when editing
+      file_name: registro.url ? registro.url.split('/').pop() || '' : '',
+      file_content: '',
     })
     setEditando(registro.uuid)
   }
@@ -233,6 +240,10 @@ export default function RegistroSanitarioComponent() {
   const currentItems = filteredRegistros.slice(indexOfFirstItem, indexOfLastItem)
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
 
   return (
     <div className="flex h-screen bg-[#eeeeee]">
@@ -265,9 +276,17 @@ export default function RegistroSanitarioComponent() {
             value={formData.cluster}
             onChange={handleInputChange}
             options={[
-              { value: "Chemical Products", label: "Productos Químicos" },
-              { value: "Food Products", label: "Productos Alimenticios" },
-              // Add more options as needed
+              { value: "No requiere", label: "No requiere" },
+              { value: "Medicamentos", label: "Medicamentos" },
+              { value: "Cosmeticos", label: "Cosméticos" },
+              { value: "Odontologicos", label: "Odontológicos" },
+              { value: "Medico Quirurgicos", label: "Médico Quirúrgicos" },
+              { value: "Aseo y Limpieza", label: "Aseo y Limpieza" },
+              { value: "Reactivo Diagnostico", label: "Reactivo Diagnóstico" },
+              { value: "Homeopaticos", label: "Homeopáticos" },
+              { value: "Suplemento dietario", label: "Suplemento dietario" },
+              { value: "Fitoterapéutico", label: "Fitoterapéutico" },
+              { value: "Biológicos", label: "Biológicos" }
             ]}
           />
           <Input
@@ -285,9 +304,12 @@ export default function RegistroSanitarioComponent() {
             value={formData.status}
             onChange={handleInputChange}
             options={[
-              { value: "Active", label: "Activo" },
-              { value: "Inactive", label: "Inactivo" },
-              // Add more options as needed
+              { value: "No requiere", label: "No requiere" },
+              { value: "Vigente", label: "Vigente" },
+              { value: "Vencido", label: "Vencido" },
+              { value: "Suspendido", label: "Suspendido" },
+              { value: "Cancelado", label: "Cancelado" },
+              { value: "En Trámite de Renovación", label: "En Trámite de Renovación" }
             ]}
           />
           <Input
@@ -319,8 +341,15 @@ export default function RegistroSanitarioComponent() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-4 pr-10 py-2 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#00632C] transition-colors"
           />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <SearchIcon className="h-5 w-5 text-gray-400" />
+          <div 
+            className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+            onClick={() => setSearchTerm('')}
+          >
+            {searchTerm ? (
+              <XIcon className="h-5 w-5 text-gray-400" />
+            ) : (
+              <SearchIcon className="h-5 w-5 text-gray-400" />
+            )}
           </div>
         </div>
 
@@ -331,16 +360,21 @@ export default function RegistroSanitarioComponent() {
             currentItems.map((registro) => (
               <div key={registro.uuid} className="bg-white p-4 rounded-lg shadow">
                 <div className="space-y-2">
-                  <p className="font-bold text-[#00632C]">Número de registro: {registro.number_registry}</p>
+                  <p className="font-bold text-[#00632C]">Número de registro: {registro.number_registry.toUpperCase()}</p>
                   <p className="text-[#333333]">Fecha de vencimiento: {registro.expiration_date}</p>
-                  <p className="text-[#333333]">Grupo: {registro.cluster}</p>
-                  <p className="text-[#333333]">Tipo de riesgo: {registro.type_risk}</p>
-                  <p className="text-[#333333]">Estado: {registro.status}</p>
+                  <p className="text-[#333333]">Grupo: {registro.cluster.toUpperCase()}</p>
+                  <p className="text-[#333333]">Tipo de riesgo: {registro.type_risk.toUpperCase()}</p>
+                  <p className="text-[#333333]">Estado: {registro.status.toUpperCase()}</p>
                   <div className="flex justify-between items-center mt-2">
-                    {registro.file_name ? (
-                      <span className="text-[#00632C]">
-                        Archivo: {registro.file_name}
-                      </span>
+                    {registro.url ? (
+                      <a
+                        href={registro.url}
+                        className="text-[#00632C] hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {registro.url.split('/').pop()}
+                      </a>
                     ) : (
                       <span className="text-gray-400">Sin archivo adjunto</span>
                     )}
@@ -361,11 +395,12 @@ export default function RegistroSanitarioComponent() {
 
         {/* Paginación */}
         {!error && (
-          <div className="flex justify-center items-center space-x-2 mt-4">
+          <div className="mt-4 flex justify-center items-center space-x-2">
             <button
               onClick={() => paginate(currentPage - 1)}
               disabled={currentPage === 1}
-              className="bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 px-4 py-2rounded-md disabled:opacity-50"
+              className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Página anterior"
             >
               <ChevronLeftIcon className="h-4 w-4" />
             </button>
@@ -373,7 +408,11 @@ export default function RegistroSanitarioComponent() {
               <button
                 key={number}
                 onClick={() => paginate(number)}
-                className={`px-4 py-2 rounded-md ${currentPage === number ? 'bg-[#00632C] text-white' : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-100'}`}
+                className={`${
+                  currentPage === number
+                    ? 'bg-[#00632C] text-white'
+                    : 'bg-white text-[#00632C] hover:bg-[#80C68C] hover:text-[#00632C]'
+                } border border-[#00632C] px-3 py-1 rounded-md`}
               >
                 {number}
               </button>
@@ -383,7 +422,11 @@ export default function RegistroSanitarioComponent() {
                 <span>...</span>
                 <button
                   onClick={() => paginate(totalPages)}
-                  className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-[#00632C] text-white' : 'bg-white border border-gray-300 text-gray-500 hover:bg-gray-100'}`}
+                  className={`${
+                    currentPage === totalPages
+                      ? 'bg-[#00632C] text-white'
+                      : 'bg-white text-[#00632C] hover:bg-[#80C68C] hover:text-[#00632C]'
+                  } border border-[#00632C] px-3 py-1 rounded-md`}
                 >
                   {totalPages}
                 </button>
@@ -392,7 +435,8 @@ export default function RegistroSanitarioComponent() {
             <button
               onClick={() => paginate(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 px-4 py-2 rounded-md disabled:opacity-50"
+              className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Página siguiente"
             >
               <ChevronRightIcon className="h-4 w-4" />
             </button>
