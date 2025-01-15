@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Navbar from './components/Navbar/Navbar'
 import { Route, Routes } from 'react-router-dom'
 import Inicio from './components/home/Inicio'
-import ResultadosBusqueda from './components/resultado-busqueda/Resultados-Busqueda'
+import ResultadosBusqueda from './components/resultado-busqueda/ResultadosBusqueda.tsx'
 import DetalleProducto from './components/DetalleProducto/Detalle'
 import RegistroMarcas from './components/Formularios/Marcas/Marcas'
 import RegistroProveedores from './components/Formularios/Proveedores/Proveedores'
@@ -20,7 +20,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path='/' element={<Inicio/>}/>
         <Route path='/resultado' element={<ResultadosBusqueda/>}/>
-        <Route path='/detalle' element={<DetalleProducto/>}/>
+        <Route path='/detalle/:uuid' element={<DetalleProducto/>}/>
         <Route path='/formularios/marcas' element={<RegistroMarcas/>}/>
         <Route path='/formularios/proveedores' element={<RegistroProveedores/>}/>
         <Route path='/formularios/categorias' element={<RegistroCategorias/>}/>
