@@ -55,15 +55,15 @@ export default function DetalleProducto() {
           </div>
 
           <div className="p-6 space-y-6">
-            <CharacteristicsSection characteristics={productData.characteristics} />
             <SanitaryRegistrySection registry={productData.sanitary_registry} />
             <DocumentSection title="Fichas Técnicas" documents={productData.technical_sheets} />
-            <ProviderSection providers={productData.providers} />
+            <ProviderSection providers={productData.providers || []} />
+            <CharacteristicsSection characteristics={productData.characteristics} />
             <CommentSection comments={productData.comments || []} productId={productData.uuid} />
           </div>
           <div className="flex justify-center mt-8 mb-8">
             <a
-                href={`/formularios/productos/editar/${productData.uuid}`}
+                href={`/formularios/productos/${productData.uuid}`}
                 className="bg-[#00632C] text-white hover:bg-[#FFD700] hover:text-[#00632C] px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
             >
               Editar
@@ -173,6 +173,17 @@ const ProductDetails = ({ product }) => {
 
 const ProviderSection = ({ providers }) => {
   const [selectedProvider, setSelectedProvider] = useState(null)
+
+  if (!providers || providers.length === 0) {
+    return (
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4">
+            <h2 className="text-2xl font-semibold text-[#00632C] mb-4">Proveedores</h2>
+            <p className="text-gray-500">No hay proveedores disponibles.</p>
+          </div>
+        </div>
+    )
+  }
 
   const capitalizeWords = (str) => {
     return str.replace(/\b\w/g, (l) => l.toUpperCase())
