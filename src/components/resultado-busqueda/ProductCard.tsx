@@ -1,39 +1,42 @@
-import { useNavigate } from 'react-router-dom'
+import React from "react"
+import { useNavigate } from "react-router-dom"
 
 interface Brand {
-    uuid: string;
-    name: string;
+    uuid: string
+    name: string
 }
 
 interface Product {
-    uuid: string;
-    generic_name: string;
-    commercial_name: string;
-    description: string;
-    image: string;
-    brand: Brand;
+    uuid: string
+    generic_name: string
+    commercial_name: string
+    description: string
+    image: string
+    brand: Brand
 }
 
 interface ProductCardProps {
-    product: Product;
+    product: Product
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
     const navigate = useNavigate()
 
     const truncateText = (text: string, wordLimit: number) => {
-        const words = text.split(' ')
+        const words = text.split(" ")
         if (words.length > wordLimit) {
-            return words.slice(0, wordLimit).join(' ') + '...'
+            return words.slice(0, wordLimit).join(" ") + "..."
         }
         return text
     }
+
+    const defaultImageUrl = "/placeholder.svg"
 
     return (
         <div className="bg-white rounded-lg shadow-md p-6 relative">
             <div className="flex items-start mb-4">
                 <img
-                    src={product.image}
+                    src={product.image[0] || defaultImageUrl}
                     alt={product.commercial_name}
                     className="w-20 h-20 rounded-md mr-4 object-cover"
                 />

@@ -1,98 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react'
+import type React from "react"
 
-interface AutocompleteSearchProps {
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    onSearch: (query: string) => void;
+interface SearchProps {
+    searchQuery: string
+    setSearchQuery: (query: string) => void
+    onSearch: (query: string) => void
 }
 
-const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({ searchQuery, setSearchQuery, onSearch }) => {
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [highlightedOption, setHighlightedOption] = useState(-1);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    const suggestions = ['Marca', 'Categoría', 'Registro sanitario', 'Proveedor'];
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
-                setShowSuggestions(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
+const Search: React.FC<SearchProps> = ({ searchQuery, setSearchQuery, onSearch }) => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearchQuery(value);
-    };
-
-    const handleInputClick = () => {
-        setShowSuggestions(true);
-    };
+        setSearchQuery(e.target.value)
+    }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (showSuggestions) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setHighlightedOption((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setHighlightedOption((prev) => (prev > 0 ? prev - 1 : prev));
-            } else if (e.key === 'Enter' && highlightedOption !== -1) {
-                e.preventDefault();
-                handleSuggestionClick(suggestions[highlightedOption]);
-            }
-        } else if (e.key === 'Enter') {
-            onSearch(searchQuery);
+        if (e.key === "Enter") {
+            onSearch(searchQuery)
         }
-    };
+    }
 
-    const handleSuggestionClick = (suggestion: string) => {
-        const newQuery = `in: ${suggestion} `;
-        console.log('Opción seleccionada:', suggestion);
-        setSearchQuery(newQuery);
-        setShowSuggestions(false);
-        if (inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.setSelectionRange(newQuery.length, newQuery.length);
-        }
-    };
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        onSearch(searchQuery)
+    }
 
     return (
-        <div className="relative w-full">
+        <form onSubmit={handleSubmit} className="relative w-full">
             <input
-                ref={inputRef}
                 type="text"
                 className="w-full p-4 pr-12 text-sm border-2 border-[#80C68C] rounded-full shadow-sm focus:outline-none focus:border-[#00873D]"
                 placeholder="Buscar productos..."
                 value={searchQuery}
                 onChange={handleInputChange}
-                onClick={handleInputClick}
                 onKeyDown={handleKeyDown}
             />
-            {showSuggestions && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                    {suggestions.map((suggestion, index) => (
-                        <div
-                            key={suggestion}
-                            className={`px-4 py-2 cursor-pointer ${
-                                index === highlightedOption ? 'bg-gray-100' : ''
-                            } hover:bg-gray-100`}
-                            onClick={() => handleSuggestionClick(suggestion)}
-                        >
-                            <button onClick={() => handleSuggestionClick(suggestion)}>{suggestion}</button>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
+            <button
+                type="submit"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-[#00873D] text-white rounded-full hover:bg-[#00632C] focus:outline-none focus:ring-2 focus:ring-[#00873D] focus:ring-opacity-50"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                </svg>
+            </button>
+        </form>
+    )
+}
 
-export default AutocompleteSearch;
+export default Search
 

@@ -9,6 +9,7 @@ import RegistroProveedores from './components/Formularios/Proveedores/Proveedore
 import RegistroCategorias from './components/Formularios/Categorias/Categorias'
 import RegistroSanitario from './components/Formularios/RegistrosSanitarios/RegistrosSanitarios'
 import FormularioProducto from './components/Formularios/Productos/FormularioProducto'
+import FormularioEditarProducto from "./components/Formularios/Productos/FormularioEditarProducto.tsx";
 
 
 const App: React.FC = () => {
@@ -26,6 +27,7 @@ const App: React.FC = () => {
         <Route path='/formularios/categorias' element={<RegistroCategorias/>}/>
         <Route path='/formularios/registros-sanitarios' element={<RegistroSanitario/>}/>
         <Route path='/formularios/productos' element={<FormularioProducto/>}/>
+        <Route path='/formularios/productos/editar/:uuid' element={<FormularioEditarProducto/>}/>
       </Routes>
     </div>
   )

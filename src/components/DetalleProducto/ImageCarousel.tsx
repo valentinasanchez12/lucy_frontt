@@ -9,10 +9,14 @@ interface ImageCarouselProps {
 
 const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, currentImage, setCurrentImage }) => {
     const nextImage = () => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         setCurrentImage((prev) => (prev + 1) % images.length)
     }
 
     const prevImage = () => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         setCurrentImage((prev) => (prev - 1 + images.length) % images.length)
     }
 

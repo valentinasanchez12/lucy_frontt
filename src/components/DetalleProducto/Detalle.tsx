@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { FileText, Building2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import CommentSection from './CommentSection'
-import CharacteristicsSection from './CharacteristicsSection'
-import ProviderModal from './ProviderModal'
-import SanitaryRegistrySection from './SanitaryRegistrySection'
-import ImageCarousel from './ImageCarousel'
+import React, { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
+import { FileText, Building2 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import CommentSection from "./CommentSection"
+import CharacteristicsSection from "./CharacteristicsSection"
+import ProviderModal from "./ProviderModal"
+import SanitaryRegistrySection from "./SanitaryRegistrySection"
+import ImageCarousel from "./ImageCarousel"
 
 export default function DetalleProducto() {
   const [currentImage, setCurrentImage] = useState(0)
@@ -20,7 +20,7 @@ export default function DetalleProducto() {
       try {
         const response = await fetch(`http://localhost:8080/api/product/${uuid}`)
         if (!response.ok) {
-          throw new Error('Failed to fetch product data')
+          throw new Error("Failed to fetch product data")
         }
         const data = await response.json()
         setProductData(data.data)
@@ -50,11 +50,7 @@ export default function DetalleProducto() {
       <div className="min-h-screen bg-[#eeeeee] text-[#333333] p-6">
         <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-6 p-6">
-            <ImageCarousel
-                images={productData.images}
-                currentImage={currentImage}
-                setCurrentImage={setCurrentImage}
-            />
+            <ImageCarousel images={productData.images} currentImage={currentImage} setCurrentImage={setCurrentImage} />
             <ProductDetails product={productData} />
           </div>
 
@@ -63,10 +59,13 @@ export default function DetalleProducto() {
             <DocumentSection title="Fichas Técnicas" documents={productData.technical_sheets} />
             <ProviderSection providers={productData.providers} />
             <CharacteristicsSection characteristics={productData.characteristics} />
-            <CommentSection comments={productData.comments} />
+            <CommentSection comments={productData.comments || []} productId={productData.uuid} />
           </div>
           <div className="flex justify-center mt-8 mb-8">
-            <a href={`/formularios/productos/${productData.uuid}`} className="bg-[#00632C] text-white hover:bg-[#FFD700] hover:text-[#00632C] px-6 py-3 rounded-lg font-semibold transition-colors duration-300">
+            <a
+                href={`/formularios/productos/editar/${productData.uuid}`}
+                className="bg-[#00632C] text-white hover:bg-[#FFD700] hover:text-[#00632C] px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
+            >
               Editar
             </a>
           </div>
@@ -77,47 +76,106 @@ export default function DetalleProducto() {
 
 const ProductDetails = ({ product }) => {
   const [showFullDescription, setShowFullDescription] = useState(false)
-  const truncatedDescription = product.description.split(' ').slice(0, 100).join(' ')
+  const truncatedDescription = product.description.split(" ").slice(0, 100).join(" ")
 
   return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-[#00632C]">{product.generic_name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</h1>
+        <h1 className="text-3xl font-bold text-[#00632C]">
+          {product.generic_name
+              .split(" ")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(" ")}
+        </h1>
         <div className="space-y-2">
-          <p><strong className="text-[#00632C]">Nombre Comercial:</strong> {product.commercial_name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
-          <p><strong className="text-[#00632C]">Marca:</strong> {product.brand.name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
+          <p>
+            <strong className="text-[#00632C]">Nombre Comercial:</strong>{" "}
+            {product.commercial_name
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">Marca:</strong>{" "}
+            {product.brand.name
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
           <div>
-            <p><strong className="text-[#00632C]">Descripción:</strong> {showFullDescription
-                ? product.description.charAt(0).toUpperCase() + product.description.slice(1).toLowerCase()
-                : (truncatedDescription.charAt(0).toUpperCase() + truncatedDescription.slice(1).toLowerCase())}</p>
-            {product.description.split(' ').length > 100 && (
+            <p>
+              <strong className="text-[#00632C]">Descripción:</strong>{" "}
+              {showFullDescription
+                  ? product.description.charAt(0).toUpperCase() + product.description.slice(1).toLowerCase()
+                  : truncatedDescription.charAt(0).toUpperCase() + truncatedDescription.slice(1).toLowerCase()}
+            </p>
+            {product.description.split(" ").length > 100 && (
                 <a
                     href="#"
                     onClick={(e) => {
-                      e.preventDefault();
-                      setShowFullDescription(!showFullDescription);
+                      e.preventDefault()
+                      setShowFullDescription(!showFullDescription)
                     }}
                     className="mt-2 text-[#00632C] hover:text-[#FFD700] underline inline-block"
                 >
-                  {showFullDescription ? 'Ver menos' : 'Ver más'}
+                  {showFullDescription ? "Ver menos" : "Ver más"}
                 </a>
             )}
           </div>
-          <p><strong className="text-[#00632C]">Composición:</strong> {product.composition.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
-          <p><strong className="text-[#00632C]">Unidad de Medida:</strong> {product.measurement.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
-          <p><strong className="text-[#00632C]">Presentación:</strong> {product.formulation.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
-          <p><strong className="text-[#00632C]">Referencia del Producto:</strong> {product.reference.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
-          <p><strong className="text-[#00632C]">Uso:</strong> {product.use.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
-          <p><strong className="text-[#00632C]">Método de Esterilizar:</strong> {product.sanitize_method.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}</p>
+          <p>
+            <strong className="text-[#00632C]">Composición:</strong>{" "}
+            {product.composition
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">Unidad de Medida:</strong>{" "}
+            {product.measurement
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">Presentación:</strong>{" "}
+            {product.formulation
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">Referencia del Producto:</strong>{" "}
+            {product.reference
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">Uso:</strong>{" "}
+            {product.use
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">Método de Esterilizar:</strong>{" "}
+            {product.sanitize_method
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")}
+          </p>
+          <p>
+            <strong className="text-[#00632C]">IVA:</strong> {product.iva ? "Sí" : "No"}
+          </p>
         </div>
       </div>
   )
 }
 
-const ProviderSection = function({ providers }) {
+const ProviderSection = ({ providers }) => {
   const [selectedProvider, setSelectedProvider] = useState(null)
 
   const capitalizeWords = (str) => {
-    return str.replace(/\b\w/g, l => l.toUpperCase());
+    return str.replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
   return (
@@ -146,17 +204,12 @@ const ProviderSection = function({ providers }) {
             </ul>
           </div>
         </div>
-        {selectedProvider && (
-            <ProviderModal
-                provider={selectedProvider}
-                onClose={() => setSelectedProvider(null)}
-            />
-        )}
+        {selectedProvider && <ProviderModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />}
       </>
   )
 }
 
-const DocumentSection = ({title, documents}) => {
+const DocumentSection = ({ title, documents }) => {
   return (
       <div className="bg-[#80C68C] rounded-lg shadow">
         <div className="p-4">
