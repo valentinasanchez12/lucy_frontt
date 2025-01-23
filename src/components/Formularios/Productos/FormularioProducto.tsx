@@ -10,7 +10,6 @@ const queryClient = new QueryClient()
 
 // Types
 type Producto = {
-  uuid?: string
   nombreGenerico: string
   nombreComercial: string
   descripcion: string
@@ -24,7 +23,6 @@ type Producto = {
   categoria: string
   registroSanitario: string
   estado: boolean
-  iva: boolean
   comentarios: string
   characteristics: Characteristic[]
 }
@@ -47,7 +45,8 @@ const InputField: React.FC<{
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   placeholder: string
   isTextarea?: boolean
-}> = ({ label, name, value, onChange, placeholder, isTextarea = false }) => (
+  required?: boolean
+}> = ({ label, name, value, onChange, placeholder, isTextarea = false, required = false }) => (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-[#00632C] mb-1">
         {label}
@@ -61,6 +60,7 @@ const InputField: React.FC<{
               placeholder={placeholder}
               rows={4}
               className="w-full p-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00873D]"
+              required={required}
           />
       ) : (
           <input
@@ -71,6 +71,7 @@ const InputField: React.FC<{
               onChange={onChange}
               placeholder={placeholder}
               className="w-full p-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00873D]"
+              required={required}
           />
       )}
     </div>
@@ -82,9 +83,9 @@ const SelectField: React.FC<{
   options: Option[]
   onChange: (option: any) => void
   placeholder: string
-  value: string
   isMulti?: boolean
-}> = ({ label, name, options, onChange, placeholder, value, isMulti = false }) => (
+  required?: boolean
+}> = ({ label, name, options, onChange, placeholder, isMulti = false, required = false }) => (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-[#00632C] mb-1">
         {label}
@@ -97,7 +98,7 @@ const SelectField: React.FC<{
           isMulti={isMulti}
           className="react-select-container"
           classNamePrefix="react-select"
-          value={options.find((option) => option.value === value)}
+          required={required}
       />
     </div>
 )
@@ -117,9 +118,7 @@ const ImageDropzone: React.FC<{
         <label className="block text-sm font-medium text-[#00632C] mb-1">Imágenes del Producto</label>
         <div
             {...getRootProps()}
-            className={`p-6 mt-1 border-2 border-dashed rounded-md ${
-                isDragActive ? "border-[#00873D] bg-[#e6f4ea]" : "border-[#80C68C]"
-            }`}
+            className={`p-6 mt-1 border-2 border-dashed rounded-md ${isDragActive ? "border-[#00873D] bg-[#e6f4ea]" : "border-[#80C68C]"}`}
         >
           <input {...getInputProps()} />
           {isDragActive ? (
@@ -155,14 +154,10 @@ const Switch: React.FC<{
       <div className="relative">
         <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
         <div
-            className={`block w-14 h-8 rounded-full transition-colors duration-200 ease-in-out ${
-                checked ? "bg-[#00873D]" : "bg-gray-600"
-            }`}
+            className={`block w-14 h-8 rounded-full transition-colors duration-200 ease-in-out ${checked ? "bg-[#00873D]" : "bg-gray-600"}`}
         ></div>
         <div
-            className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200 ease-in-out ${
-                checked ? "transform translate-x-6" : ""
-            }`}
+            className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200 ease-in-out ${checked ? "transform translate-x-6" : ""}`}
         ></div>
       </div>
       <div className="ml-3 text-sm font-medium text-[#00632C]">{label}</div>
@@ -295,8 +290,6 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 // Main component
 const FormularioProductoInterno: React.FC = () => {
-  const [uuid, setUuid] = useState<string | null>(null)
-
   const [producto, setProducto] = useState<Producto>({
     nombreGenerico: "",
     nombreComercial: "",
@@ -311,13 +304,13 @@ const FormularioProductoInterno: React.FC = () => {
     categoria: "",
     registroSanitario: "",
     estado: true,
-    iva: false,
     comentarios: "",
     characteristics: [{ name: "", description: "" }],
   })
 
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [technicalSheetFile, setTechnicalSheetFile] = useState<File | null>(null)
+  const [iva, setIva] = useState(false)
 
   const [marcasError, setMarcasError] = useState<string | null>(null)
   const [categoriasError, setCategoriasError] = useState<string | null>(null)
@@ -337,32 +330,6 @@ const FormularioProductoInterno: React.FC = () => {
             setRegistrosSanitariosError(`Error al cargar los registros sanitarios: ${error.message}`),
       },
   )
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const uuidParam = params.get("uuid")
-    setUuid(uuidParam)
-
-    const fetchProductData = async () => {
-      if (uuidParam) {
-        try {
-          const response = await fetch(`http://localhost:8080/api/product/${uuidParam}`)
-          if (!response.ok) {
-            throw new Error("Error fetching product data")
-          }
-          const data = await response.json()
-          setProducto({
-            ...data,
-            characteristics: data.characteristics || [{ name: "", description: "" }],
-          })
-        } catch (error) {
-          console.error("Error fetching product data:", error)
-        }
-      }
-    }
-
-    fetchProductData()
-  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -410,6 +377,47 @@ const FormularioProductoInterno: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
+    // Client-side validation
+    const requiredFields = [
+      "nombreGenerico",
+      "nombreComercial",
+      "descripcion",
+      "unidadMedida",
+      "presentacion",
+      "composicion",
+      "referencia",
+      "uso",
+      "metodoEsterilizar",
+      "marca",
+      "categoria",
+      "registroSanitario",
+    ]
+    const emptyFields = requiredFields.filter((field) => !producto[field as keyof Producto])
+
+    if (emptyFields.length > 0) {
+      alert(`Por favor, complete los siguientes campos obligatorios: ${emptyFields.join(", ")}`)
+      return
+    }
+
+    // Validate image files
+    if (imageFiles.length === 0) {
+      alert("Por favor, seleccione al menos una imagen del producto.")
+      return
+    }
+
+    const imageTypes = ["image/jpeg", "image/png", "image/gif"]
+    if (!validateFiles(imageFiles, imageTypes)) {
+      alert("Invalid image file type. Please use JPEG, PNG, or GIF.")
+      return
+    }
+
+    // Validate technical sheet file
+    const technicalSheetTypes = ["application/pdf", ...imageTypes]
+    if (technicalSheetFile && !validateFiles([technicalSheetFile], technicalSheetTypes)) {
+      alert("Invalid technical sheet file type. Please use PDF or image files.")
+      return
+    }
+
     // Prepare data for submission
     const keyMapping: { [key: string]: string } = {
       nombreGenerico: "generic_name",
@@ -425,7 +433,7 @@ const FormularioProductoInterno: React.FC = () => {
       categoria: "category",
       registroSanitario: "sanitary_register",
       estado: "status",
-      comentarios: "comment",
+      comentarios: "comment", // Add this line
     }
 
     const lowercaseValue = (value: any): any => {
@@ -450,16 +458,13 @@ const FormularioProductoInterno: React.FC = () => {
 
     const productData = {
       ...mappedProducto,
-      iva: producto.iva,
-      images:
-          imageFiles.length > 0
-              ? await Promise.all(
-                  imageFiles.map(async (file) => ({
-                    file_name: file.name,
-                    file_content: await fileToBase64(file),
-                  })),
-              )
-              : [],
+      iva: iva,
+      images: await Promise.all(
+          imageFiles.map(async (file) => ({
+            file_name: file.name,
+            file_content: await fileToBase64(file),
+          })),
+      ),
       technical_sheet: technicalSheetFile
           ? {
             file_name: technicalSheetFile.name,
@@ -469,11 +474,8 @@ const FormularioProductoInterno: React.FC = () => {
     }
 
     try {
-      const url = uuid ? `http://localhost:8080/api/product/${uuid}` : "http://localhost:8080/api/product/"
-      const method = uuid ? "PUT" : "POST"
-
-      const response = await fetch(url, {
-        method: method,
+      const response = await fetch("http://localhost:8080/api/product/", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -487,19 +489,19 @@ const FormularioProductoInterno: React.FC = () => {
       }
 
       console.log("Product saved successfully:", result)
-      alert(uuid ? "Producto actualizado exitosamente" : "Producto guardado exitosamente")
-      // Redirect to product list page
-      window.location.href = "/"
+      alert("Producto guardado exitosamente")
+      // Reload the page
+      window.location.reload()
     } catch (error) {
       console.error("Error saving product:", error)
-      alert(`Error al ${uuid ? "actualizar" : "guardar"} el producto: ${error.message}`)
+      alert(`Error al guardar el producto: ${error.message}`)
     }
   }
 
   return (
       <div className="min-h-screen bg-[#eeeeee] text-[#333333] p-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold mb-6 text-[#00632C]">{uuid ? "Editar Producto" : "Crear Nuevo Producto"}</h1>
+          <h1 className="text-2xl font-bold mb-6 text-[#00632C]">Crear Nuevo Producto</h1>
 
           {marcasError && <ErrorMessage message={marcasError} onDismiss={() => setMarcasError(null)} />}
           {categoriasError && <ErrorMessage message={categoriasError} onDismiss={() => setCategoriasError(null)} />}
@@ -515,6 +517,7 @@ const FormularioProductoInterno: React.FC = () => {
                   value={producto.nombreGenerico}
                   onChange={handleInputChange}
                   placeholder="Ingrese el nombre genérico"
+                  required
               />
               <InputField
                   label="Nombre Comercial"
@@ -522,6 +525,7 @@ const FormularioProductoInterno: React.FC = () => {
                   value={producto.nombreComercial}
                   onChange={handleInputChange}
                   placeholder="Ingrese el nombre comercial"
+                  required
               />
             </div>
 
@@ -532,6 +536,7 @@ const FormularioProductoInterno: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Ingrese la descripción del producto"
                 isTextarea
+                required
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -541,6 +546,7 @@ const FormularioProductoInterno: React.FC = () => {
                   value={producto.unidadMedida}
                   onChange={handleInputChange}
                   placeholder="Ej: kg, litros, unidades"
+                  required
               />
               <InputField
                   label="Presentación"
@@ -548,6 +554,7 @@ const FormularioProductoInterno: React.FC = () => {
                   value={producto.presentacion}
                   onChange={handleInputChange}
                   placeholder="Ej: Caja de 10 unidades"
+                  required
               />
             </div>
 
@@ -558,6 +565,7 @@ const FormularioProductoInterno: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Ingrese la composición del producto"
                 isTextarea
+                required
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -567,6 +575,7 @@ const FormularioProductoInterno: React.FC = () => {
                   value={producto.referencia}
                   onChange={handleInputChange}
                   placeholder="Ingrese la referencia"
+                  required
               />
               <InputField
                   label="Uso"
@@ -574,6 +583,7 @@ const FormularioProductoInterno: React.FC = () => {
                   value={producto.uso}
                   onChange={handleInputChange}
                   placeholder="Ingrese el uso del producto"
+                  required
               />
             </div>
 
@@ -583,6 +593,7 @@ const FormularioProductoInterno: React.FC = () => {
                 value={producto.metodoEsterilizar}
                 onChange={handleInputChange}
                 placeholder="Ingrese el método de esterilización"
+                required
             />
 
             <ImageDropzone onDrop={onDropImages} imagenes={imageFiles} />
@@ -594,7 +605,7 @@ const FormularioProductoInterno: React.FC = () => {
                   options={marcas}
                   onChange={handleSelectChange("marca")}
                   placeholder="Seleccione una marca"
-                  value={producto.marca}
+                  required
               />
               <SelectField
                   label="Categoría"
@@ -602,7 +613,7 @@ const FormularioProductoInterno: React.FC = () => {
                   options={categorias}
                   onChange={handleSelectChange("categoria")}
                   placeholder="Seleccione una categoría"
-                  value={producto.categoria}
+                  required
               />
             </div>
 
@@ -625,7 +636,7 @@ const FormularioProductoInterno: React.FC = () => {
                   options={registrosSanitarios}
                   onChange={handleSelectChange("registroSanitario")}
                   placeholder="Seleccione un registro sanitario"
-                  value={producto.registroSanitario}
+                  required
               />
             </div>
 
@@ -635,11 +646,7 @@ const FormularioProductoInterno: React.FC = () => {
                   onChange={(checked) => setProducto((prev) => ({ ...prev, estado: checked }))}
                   label={`Estado (${producto.estado ? "Activo" : "Inactivo"})`}
               />
-              <Switch
-                  checked={producto.iva}
-                  onChange={(checked) => setProducto((prev) => ({ ...prev, iva: checked }))}
-                  label={`IVA (${producto.iva ? "Aplicado" : "No Aplicado"})`}
-              />
+              <Switch checked={iva} onChange={setIva} label={`IVA (${iva ? "Aplicado" : "No Aplicado"})`} />
             </div>
 
             <div className="space-y-4">
@@ -653,6 +660,7 @@ const FormularioProductoInterno: React.FC = () => {
                           value={characteristic.name}
                           onChange={(e) => handleCharacteristicChange(index, "name", e.target.value)}
                           placeholder="Ej: Color, Tamaño, Material"
+                          required
                       />
                     </div>
                     <div className="flex-1">
@@ -662,6 +670,7 @@ const FormularioProductoInterno: React.FC = () => {
                           value={characteristic.description}
                           onChange={(e) => handleCharacteristicChange(index, "description", e.target.value)}
                           placeholder="Describa la característica"
+                          required
                       />
                     </div>
                     {index > 0 && (
@@ -699,7 +708,7 @@ const FormularioProductoInterno: React.FC = () => {
                   type="submit"
                   className="px-6 py-2 bg-[#FFD700] text-[#333333] rounded-full hover:bg-[#00632C] hover:text-white transition-colors duration-200"
               >
-                {uuid ? "Actualizar Producto" : "Crear Producto"}
+                Crear Producto
               </button>
             </div>
           </form>
