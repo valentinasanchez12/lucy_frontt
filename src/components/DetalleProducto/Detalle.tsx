@@ -63,7 +63,7 @@ export default function DetalleProducto() {
           </div>
           <div className="flex justify-center mt-8 mb-8">
             <a
-                href={`/formularios/productos/${productData.uuid}`}
+                href={`/formularios/productos/editar/${productData.uuid}`}
                 className="bg-[#00632C] text-white hover:bg-[#FFD700] hover:text-[#00632C] px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
             >
               Editar
