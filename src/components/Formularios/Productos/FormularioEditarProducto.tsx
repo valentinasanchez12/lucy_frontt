@@ -622,7 +622,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
             console.log("Product updated successfully:", result)
             alert("Producto actualizado exitosamente")
             // Redirect to product list page
-            window.location.href = "/productos"
+            window.location.href = "/"
         } catch (error) {
             console.error("Error updating product:", error)
             alert(`Error al actualizar el producto: ${error.message}`)

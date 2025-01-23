@@ -489,7 +489,7 @@ const FormularioProductoInterno: React.FC = () => {
       console.log("Product saved successfully:", result)
       alert(uuid ? "Producto actualizado exitosamente" : "Producto guardado exitosamente")
       // Redirect to product list page
-      window.location.href = "/productos"
+      window.location.href = "/"
     } catch (error) {
       console.error("Error saving product:", error)
       alert(`Error al ${uuid ? "actualizar" : "guardar"} el producto: ${error.message}`)
