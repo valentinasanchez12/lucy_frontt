@@ -85,10 +85,10 @@ export default function DetalleProducto() {
           </div>
 
           <div className="p-6 space-y-6">
+            <CharacteristicsSection characteristics={productData.characteristics}/>
             <SanitaryRegistrySection registry={productData.sanitary_registry}/>
             <DocumentSection title="Fichas Técnicas" documents={productData.technical_sheets}/>
             <ProviderSection providers={productData.providers || []}/>
-            <CharacteristicsSection characteristics={productData.characteristics}/>
             <CommentSection comments={productData.comments || []} productId={productData.uuid}/>
           </div>
           <div className="flex justify-center mt-8 mb-8">
