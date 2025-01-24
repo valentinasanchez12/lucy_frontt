@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface Characteristic {
+export interface Characteristic {
     uuid: string;
     characteristic: string;
     description: string;

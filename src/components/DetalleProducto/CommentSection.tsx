@@ -1,7 +1,7 @@
 import type React from "react"
 import { useState } from "react"
 
-interface Comment {
+export interface Comment {
     uuid: string
     comment: string
     product_uuid: string
@@ -11,12 +11,12 @@ interface Comment {
 }
 
 interface CommentSectionProps {
-    comments: Comment[] | null | undefined
-    productId: string
+    comments: Comment[];
+    productId: string;
 }
 
 const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialComments, productId }) => {
-    const [comments, setComments] = useState<Comment[]>(initialComments || [])
+    const [comments, setComments] = useState<Comment[]>(initialComments ?? [])
     const [newComment, setNewComment] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)

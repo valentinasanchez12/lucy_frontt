@@ -1,19 +1,45 @@
-import React, { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
-import { FileText, Building2 } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import CommentSection from "./CommentSection"
-import CharacteristicsSection from "./CharacteristicsSection"
+import { useState, useEffect, Key} from "react"
+import {useParams} from "react-router-dom"
+import {FileText, Building2} from "lucide-react"
+import CommentSection, {Comment} from "./CommentSection"
+import CharacteristicsSection, {Characteristic} from "./CharacteristicsSection"
 import ProviderModal from "./ProviderModal"
-import SanitaryRegistrySection from "./SanitaryRegistrySection"
+import SanitaryRegistrySection, {SanitaryRegistry} from "./SanitaryRegistrySection"
 import ImageCarousel from "./ImageCarousel"
+
+
+interface ProductData {
+  uuid: string;
+  generic_name: string;
+  description: string;
+  commercial_name: string;
+  brand: { name: string };
+  composition: string;
+  measurement: string;
+  formulation: string;
+  reference: string;
+  use: string;
+  sanitize_method: string;
+  iva: boolean;
+  images: string[];
+  sanitary_registry: SanitaryRegistry | null;
+  technical_sheets: { documents: string }[];
+  providers: Provider[];
+  comments: Comment[];
+  characteristics: Characteristic[];
+}
+
+interface DocumentSectionProps {
+  title: string;
+  documents: { documents: string | undefined }[];
+}
 
 export default function DetalleProducto() {
   const [currentImage, setCurrentImage] = useState(0)
-  const [productData, setProductData] = useState(null)
+  const [productData, setProductData] = useState<ProductData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const { uuid } = useParams()
+  const [error, setError] = useState<string | null>(null)
+  const {uuid} = useParams()
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -26,8 +52,12 @@ export default function DetalleProducto() {
         setProductData(data.data)
         setLoading(false)
       } catch (err) {
-        setError(err.message)
-        setLoading(false)
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Ocurrió un error desconocido.");
+        }
+        setLoading(false);
       }
     }
 
@@ -50,16 +80,16 @@ export default function DetalleProducto() {
       <div className="min-h-screen bg-[#eeeeee] text-[#333333] p-6">
         <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-6 p-6">
-            <ImageCarousel images={productData.images} currentImage={currentImage} setCurrentImage={setCurrentImage} />
-            <ProductDetails product={productData} />
+            <ImageCarousel images={productData.images} currentImage={currentImage} setCurrentImage={setCurrentImage}/>
+            <ProductDetails product={productData}/>
           </div>
 
           <div className="p-6 space-y-6">
-            <SanitaryRegistrySection registry={productData.sanitary_registry} />
-            <DocumentSection title="Fichas Técnicas" documents={productData.technical_sheets} />
-            <ProviderSection providers={productData.providers || []} />
-            <CharacteristicsSection characteristics={productData.characteristics} />
-            <CommentSection comments={productData.comments || []} productId={productData.uuid} />
+            <SanitaryRegistrySection registry={productData.sanitary_registry}/>
+            <DocumentSection title="Fichas Técnicas" documents={productData.technical_sheets}/>
+            <ProviderSection providers={productData.providers || []}/>
+            <CharacteristicsSection characteristics={productData.characteristics}/>
+            <CommentSection comments={productData.comments || []} productId={productData.uuid}/>
           </div>
           <div className="flex justify-center mt-8 mb-8">
             <a
@@ -74,7 +104,8 @@ export default function DetalleProducto() {
   )
 }
 
-const ProductDetails = ({ product }) => {
+
+const ProductDetails = ({product}: { product: ProductData }) => {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const truncatedDescription = product.description.split(" ").slice(0, 100).join(" ")
 
@@ -83,7 +114,7 @@ const ProductDetails = ({ product }) => {
         <h1 className="text-3xl font-bold text-[#00632C]">
           {product.generic_name
               .split(" ")
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
               .join(" ")}
         </h1>
         <div className="space-y-2">
@@ -91,14 +122,14 @@ const ProductDetails = ({ product }) => {
             <strong className="text-[#00632C]">Nombre Comercial:</strong>{" "}
             {product.commercial_name
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
             <strong className="text-[#00632C]">Marca:</strong>{" "}
             {product.brand.name
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <div>
@@ -125,42 +156,42 @@ const ProductDetails = ({ product }) => {
             <strong className="text-[#00632C]">Composición:</strong>{" "}
             {product.composition
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
             <strong className="text-[#00632C]">Unidad de Medida:</strong>{" "}
             {product.measurement
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
             <strong className="text-[#00632C]">Presentación:</strong>{" "}
             {product.formulation
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
             <strong className="text-[#00632C]">Referencia del Producto:</strong>{" "}
             {product.reference
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
             <strong className="text-[#00632C]">Uso:</strong>{" "}
             {product.use
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
             <strong className="text-[#00632C]">Método de Esterilizar:</strong>{" "}
             {product.sanitize_method
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
           <p>
@@ -171,8 +202,18 @@ const ProductDetails = ({ product }) => {
   )
 }
 
-const ProviderSection = ({ providers }) => {
-  const [selectedProvider, setSelectedProvider] = useState(null)
+interface Provider {
+  uuid: string;
+  nit: string;
+  types_person: string;
+  name: string;
+  represent: string;
+  phone: string;
+  email: string;
+}
+
+const ProviderSection = ({providers}: { providers: Provider[] }) => {
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
 
   if (!providers || providers.length === 0) {
     return (
@@ -185,9 +226,11 @@ const ProviderSection = ({ providers }) => {
     )
   }
 
-  const capitalizeWords = (str) => {
+  const capitalizeWords = (str: string) => {
     return str.replace(/\b\w/g, (l) => l.toUpperCase())
   }
+
+
 
   return (
       <>
@@ -198,7 +241,7 @@ const ProviderSection = ({ providers }) => {
               {providers.map((provider, index) => (
                   <li key={index} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <Building2 className="h-6 w-6 text-[#00632C]" />
+                      <Building2 className="h-6 w-6 text-[#00632C]"/>
                       <div>
                         <p className="font-semibold">{capitalizeWords(provider.name)}</p>
                         <p className="text-sm">NIT: {provider.nit}</p>
@@ -215,19 +258,19 @@ const ProviderSection = ({ providers }) => {
             </ul>
           </div>
         </div>
-        {selectedProvider && <ProviderModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />}
+        {selectedProvider && <ProviderModal provider={selectedProvider} onClose={() => setSelectedProvider(null)}/>}
       </>
   )
 }
 
-const DocumentSection = ({ title, documents }) => {
+const DocumentSection = ({title, documents}: DocumentSectionProps) => {
   return (
       <div className="bg-[#80C68C] rounded-lg shadow">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-[#00632C] mb-4">{title}</h2>
           {documents && documents.length > 0 ? (
               <ul className="space-y-2">
-                {documents.map((doc, index) => (
+                {documents.map((doc: { documents: string | undefined }, index: Key | null | undefined) => (
                     <li key={index} className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <FileText className="text-[#00632C]" />
@@ -237,7 +280,7 @@ const DocumentSection = ({ title, documents }) => {
                             rel="noopener noreferrer"
                             className="text-[#00632C] hover:text-[#FFD700]"
                         >
-                          {`Documento ${index + 1}`}
+                          {`Documento ${Number(index ?? 0) + 1}`}
                         </a>
                       </div>
                     </li>

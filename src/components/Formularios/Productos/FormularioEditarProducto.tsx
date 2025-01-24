@@ -428,13 +428,13 @@ const FormularioEditarProductoInterno: React.FC = () => {
     const [categoriasError, setCategoriasError] = useState<string | null>(null)
     const [registrosSanitariosError, setRegistrosSanitariosError] = useState<string | null>(null)
 
-    const { data: marcas = [], error: marcasQueryError } = useQuery("marcas", fetchMarcas, {
+    const { data: marcas = []} = useQuery("marcas", fetchMarcas, {
         onError: (error: any) => setMarcasError(`Error al cargar las marcas: ${error.message}`),
     })
-    const { data: categorias = [], error: categoriasQueryError } = useQuery("categorias", fetchCategorias, {
+    const { data: categorias = []} = useQuery("categorias", fetchCategorias, {
         onError: (error: any) => setCategoriasError(`Error al cargar las categorías: ${error.message}`),
     })
-    const { data: registrosSanitarios = [], error: registrosSanitariosQueryError } = useQuery(
+    const { data: registrosSanitarios = []} = useQuery(
         "registrosSanitarios",
         fetchRegistrosSanitarios,
         {
@@ -517,11 +517,6 @@ const FormularioEditarProductoInterno: React.FC = () => {
             characteristics: prev.characteristics.filter((_, i) => i !== index),
         }))
     }
-
-    const validateFiles = (files: File[], allowedTypes: string[]): boolean => {
-        return files.every((file) => allowedTypes.includes(file.type))
-    }
-
     const handleDeleteExistingImage = (index: number) => {
         setProducto((prev) => ({
             ...prev,
@@ -624,8 +619,11 @@ const FormularioEditarProductoInterno: React.FC = () => {
             // Redirect to product list page
             window.location.href = "/"
         } catch (error) {
-            console.error("Error updating product:", error)
-            alert(`Error al actualizar el producto: ${error.message}`)
+            if (error instanceof Error) {
+                alert(`Error al actualizar el producto: ${error.message}`);
+            } else {
+                alert("Ocurrió un error desconocido al actualizar el producto.");
+            }
         }
     }
 

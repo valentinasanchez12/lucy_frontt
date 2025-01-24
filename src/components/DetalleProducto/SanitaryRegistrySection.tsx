@@ -1,7 +1,7 @@
 import React from 'react'
 import { FileText } from 'lucide-react'
 
-interface SanitaryRegistry {
+export interface SanitaryRegistry {
     number_registry: string;
     url: string;
 }

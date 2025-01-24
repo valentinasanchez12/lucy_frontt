@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { QueryClient, QueryClientProvider, useQuery } from "react-query"
 import Select from "react-select"
 import { useDropzone } from "react-dropzone"
@@ -316,13 +316,13 @@ const FormularioProductoInterno: React.FC = () => {
   const [categoriasError, setCategoriasError] = useState<string | null>(null)
   const [registrosSanitariosError, setRegistrosSanitariosError] = useState<string | null>(null)
 
-  const { data: marcas = [], error: marcasQueryError } = useQuery("marcas", fetchMarcas, {
+  const { data: marcas = []} = useQuery("marcas", fetchMarcas, {
     onError: (error: any) => setMarcasError(`Error al cargar las marcas: ${error.message}`),
   })
-  const { data: categorias = [], error: categoriasQueryError } = useQuery("categorias", fetchCategorias, {
+  const { data: categorias = []} = useQuery("categorias", fetchCategorias, {
     onError: (error: any) => setCategoriasError(`Error al cargar las categorías: ${error.message}`),
   })
-  const { data: registrosSanitarios = [], error: registrosSanitariosQueryError } = useQuery(
+  const { data: registrosSanitarios = []} = useQuery(
       "registrosSanitarios",
       fetchRegistrosSanitarios,
       {
@@ -493,8 +493,11 @@ const FormularioProductoInterno: React.FC = () => {
       // Reload the page
       window.location.reload()
     } catch (error) {
-      console.error("Error saving product:", error)
-      alert(`Error al guardar el producto: ${error.message}`)
+      if (error instanceof Error) {
+        alert(`Error al guardar el producto: ${error.message}`);
+      } else {
+        alert("Error desconocido al guardar el producto.");
+      }
     }
   }
 

@@ -26,14 +26,24 @@ interface RegistroSanitarioInput {
 }
 
 // Componentes de UI
-const Input = ({ label, ...props }) => (
+const Input: React.FC<{
+  label: string;
+} & React.InputHTMLAttributes<HTMLInputElement>> = ({ label, ...props }) => (
   <div className="mb-4">
     <label className="block text-sm font-bold mb-2" htmlFor={props.id}>{label}</label>
     <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" {...props} />
   </div>
 )
 
-const Select = ({ label, options, ...props }) => (
+const Select = ({
+                  label,
+                  options,
+                  ...props
+                }: {
+  label: string;
+  options: { value: string; label: string }[];
+  [key: string]: any;
+}) => (
   <div className="mb-4">
     <label className="block text-sm font-bold mb-2" htmlFor={props.id}>{label}</label>
     <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" {...props}>
@@ -45,7 +55,11 @@ const Select = ({ label, options, ...props }) => (
   </div>
 )
 
-const Button = ({ children, className, ...props }) => (
+const Button: React.FC <{
+  className?: string;
+  children: React.ReactNode;
+  [key: string]: any; // Para props adicionales
+}> = ({ children, className, ...props }) => (
   <button
     className={`bg-[#FFD700] hover:bg-[#80C68C] text-[#00632C] font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${className}`}
     {...props}
