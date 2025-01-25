@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
+import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
 
 interface Categoria {
   uuid: string;
@@ -166,7 +167,7 @@ export default function RegistroCategorias() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch('http://localhost:8080/api/category')
+      const response = await fetch(`${API_BASE_URL}'/api/category/`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -197,7 +198,7 @@ export default function RegistroCategorias() {
         let newCategory: Categoria;
         const nombreEnMinusculas = nombreCategoria.toLowerCase();
         if (editando) {
-          response = await fetch(`http://localhost:8080/api/category/${editando}`, {
+          response = await fetch(`${API_BASE_URL}/api/category/${editando}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -211,7 +212,7 @@ export default function RegistroCategorias() {
             prevCategorias.map(cat => cat.uuid === editando ? newCategory : cat)
           )
         } else {
-          response = await fetch('http://localhost:8080/api/category', {
+          response = await fetch(`${API_BASE_URL}/api/category/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -247,7 +248,7 @@ export default function RegistroCategorias() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch(`http://localhost:8080/api/category/${uuid}`, {
+      const response = await fetch(`${API_BASE_URL}/api/category/${uuid}`, {
         method: 'DELETE',
       })
 

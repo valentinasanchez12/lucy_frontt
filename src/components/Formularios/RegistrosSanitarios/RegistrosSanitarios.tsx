@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { SearchIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react'
+import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
 
 // Definición de tipos
 interface RegistroSanitario {
@@ -69,7 +70,7 @@ const Button: React.FC <{
 )
 
 // Funciones de API
-const API_URL = 'http://localhost:8080/api/sanitary-registry';
+const API_URL = `${API_BASE_URL}/api/sanitary-registry/`;
 
 async function fetchRegistrosSanitarios(): Promise<RegistroSanitario[]> {
   const response = await fetch(API_URL);
@@ -382,7 +383,7 @@ export default function RegistroSanitarioComponent() {
                   <div className="flex justify-between items-center mt-2">
                     {registro.url ? (
                       <a
-                        href={registro.url}
+                        href={`${API_BASE_URL}${registro.url}`}
                         className="text-[#00632C] hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"

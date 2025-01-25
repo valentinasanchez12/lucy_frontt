@@ -1,5 +1,6 @@
 import React from 'react'
 import { FileText } from 'lucide-react'
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 
 export interface SanitaryRegistry {
     number_registry: string;
@@ -24,7 +25,7 @@ const SanitaryRegistrySection: React.FC<SanitaryRegistrySectionProps> = ({ regis
                             <p className="flex items-center">
                                 <FileText className="w-6 h-6 mr-2 text-[#00632C]" />
                                 <a
-                                    href={registry.url}
+                                    href={`${API_BASE_URL}${registry.url}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-[#00632C] hover:text-[#FFD700]"

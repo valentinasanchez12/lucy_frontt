@@ -6,6 +6,7 @@ import CharacteristicsSection, {Characteristic} from "./CharacteristicsSection"
 import ProviderModal from "./ProviderModal"
 import SanitaryRegistrySection, {SanitaryRegistry} from "./SanitaryRegistrySection"
 import ImageCarousel from "./ImageCarousel"
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 
 
 interface ProductData {
@@ -44,7 +45,7 @@ export default function DetalleProducto() {
   useEffect(() => {
     const fetchProductData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/product/${uuid}`)
+        const response = await fetch(`${API_BASE_URL}/api/product/${uuid}`)
         if (!response.ok) {
           throw new Error("Failed to fetch product data")
         }
@@ -275,7 +276,7 @@ const DocumentSection = ({title, documents}: DocumentSectionProps) => {
                       <div className="flex items-center space-x-2">
                         <FileText className="text-[#00632C]" />
                         <a
-                            href={doc.documents}
+                            href={`${API_BASE_URL}${doc.documents}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#00632C] hover:text-[#FFD700]"

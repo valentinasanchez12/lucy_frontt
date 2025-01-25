@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 
 interface Brand {
     uuid: string
@@ -35,7 +36,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="bg-white rounded-lg shadow-md p-6 relative">
             <div className="flex items-start mb-4">
                 <img
-                    src={product.image[0] || defaultImageUrl}
+                    src={`${API_BASE_URL}${product.image[0]}` || defaultImageUrl}
                     alt={product.commercial_name}
                     className="w-20 h-20 rounded-md mr-4 object-cover"
                 />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
 
 interface Marca {
   uuid: string;
@@ -170,7 +171,7 @@ export default function RegistroMarcas() {
 
   const fetchMarcas = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/brand')
+      const response = await fetch(`${API_BASE_URL}/api/brand/`)
       if (!response.ok) {
         throw new Error('Failed to fetch brands')
       }
@@ -192,7 +193,7 @@ export default function RegistroMarcas() {
       try {
         if (editando) {
           // Update existing brand
-          const response = await fetch(`http://localhost:8080/api/brand/${editando}`, {
+          const response = await fetch(`${API_BASE_URL}/api/brand/${editando}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -209,7 +210,7 @@ export default function RegistroMarcas() {
           setEditando(null)
         } else {
           // Create new brand
-          const response = await fetch('http://localhost:8080/api/brand', {
+          const response = await fetch(`${API_BASE_URL}/api/brand/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -242,7 +243,7 @@ export default function RegistroMarcas() {
   const eliminarMarca = async (uuid: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta marca?')) {
       try {
-        const response = await fetch(`http://localhost:8080/api/brand/${uuid}`, {
+        const response = await fetch(`${API_BASE_URL}/api/brand/${uuid}`, {
           method: 'DELETE',
         })
         if (!response.ok) {

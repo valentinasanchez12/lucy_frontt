@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
 
 type Proveedor = {
   id: string;
@@ -83,7 +84,7 @@ export default function RegistroProveedores() {
   const fetchProveedores = async () => {
     try {
       setErrors([])
-      const response = await fetch('http://localhost:8080/api/provider')
+      const response = await fetch(`${API_BASE_URL}/api/provider/`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -118,7 +119,7 @@ export default function RegistroProveedores() {
   const fetchBrands = async () => {
     try {
       setErrors([])
-      const response = await fetch('http://localhost:8080/api/brand')
+      const response = await fetch(`${API_BASE_URL}/api/brand/`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -171,8 +172,8 @@ export default function RegistroProveedores() {
 
     try {
       const url = editingId
-          ? `http://localhost:8080/api/provider/${editingId}`
-          : 'http://localhost:8080/api/provider'
+          ? `${API_BASE_URL}/api/provider/${editingId}`
+          : `${API_BASE_URL}/api/provider/`
       const method = editingId ? 'PUT' : 'POST'
 
       const response = await fetch(url, {
@@ -222,7 +223,7 @@ export default function RegistroProveedores() {
   const handleDelete = async (id: string) => {
     try {
       setErrors([])
-      const response = await fetch(`http://localhost:8080/api/provider/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/provider/${id}`, {
         method: 'DELETE',
       })
       if (!response.ok) {

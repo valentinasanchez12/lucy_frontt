@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 
 interface ImageCarouselProps {
     images: string[];
@@ -28,12 +29,11 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, currentImage, set
             </div>
         )
     }
-
     return (
         <div className="space-y-4">
             <div className="relative aspect-square">
                 <img
-                    src={images[currentImage]}
+                    src={`${API_BASE_URL}${images[currentImage]}`}
                     alt={`Imagen del producto ${currentImage + 1}`}
                     className="rounded-lg object-cover w-full h-full"
                     onError={(e) => {
@@ -64,7 +64,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, currentImage, set
                         className={`flex-shrink-0 ${currentImage === index ? 'ring-2 ring-[#00632C]' : ''}`}
                     >
                         <img
-                            src={img}
+                            src={`${API_BASE_URL}${img}`}
                             alt={`Miniatura ${index + 1}`}
                             className="rounded-md object-cover w-full h-auto aspect-square"
                             onError={(e) => {

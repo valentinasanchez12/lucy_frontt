@@ -1,5 +1,6 @@
 import type React from "react"
 import { useState } from "react"
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 
 export interface Comment {
     uuid: string
@@ -29,7 +30,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialCommen
         setError(null)
 
         try {
-            const response = await fetch("http://localhost:8080/api/comments", {
+            const response = await fetch(`${API_BASE_URL}/api/comments`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

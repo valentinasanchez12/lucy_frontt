@@ -5,6 +5,7 @@ import Select from "react-select"
 import { useDropzone } from "react-dropzone"
 import { X, Plus } from "lucide-react"
 import { useParams } from "react-router-dom"
+import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
 
 // Create a client
 const queryClient = new QueryClient()
@@ -189,7 +190,7 @@ const ImageDropzone: React.FC<{
                         {existingImages.map((url, index) => (
                             <div key={index} className="relative">
                                 <img
-                                    src={url || "/placeholder.svg"}
+                                    src={`${API_BASE_URL}${url}` || "/placeholder.svg"}
                                     alt={`Existing image ${index + 1}`}
                                     className="w-full h-auto rounded-md"
                                 />
@@ -286,7 +287,7 @@ const capitalizeWords = (str: string) => {
 
 // Functions to fetch data from API
 const fetchMarcas = async (): Promise<Option[]> => {
-    const response = await fetch("http://localhost:8080/api/brand")
+    const response = await fetch(`${API_BASE_URL}/api/brand/`)
     if (!response.ok) {
         throw new Error("Error fetching brands")
     }
@@ -304,7 +305,7 @@ const fetchMarcas = async (): Promise<Option[]> => {
 }
 
 const fetchCategorias = async (): Promise<Option[]> => {
-    const response = await fetch("http://localhost:8080/api/category")
+    const response = await fetch(`${API_BASE_URL}/api/category/`)
     if (!response.ok) {
         throw new Error("Error fetching categories")
     }
@@ -322,7 +323,7 @@ const fetchCategorias = async (): Promise<Option[]> => {
 }
 
 const fetchRegistrosSanitarios = async (): Promise<Option[]> => {
-    const response = await fetch("http://localhost:8080/api/sanitary-registry")
+    const response = await fetch(`${API_BASE_URL}/api/sanitary-registry/`)
     if (!response.ok) {
         throw new Error("Error fetching sanitary registries")
     }
@@ -359,7 +360,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 // Function to fetch product data
 const fetchProductData = async (uuid: string): Promise<Producto> => {
-    const response = await fetch(`http://localhost:8080/api/product/${uuid}`)
+    const response = await fetch(`${API_BASE_URL}/api/product/${uuid}`)
     if (!response.ok) {
         throw new Error("Error fetching product data")
     }
@@ -597,7 +598,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
         }
 
         try {
-            const url = `http://localhost:8080/api/product/${uuid}`
+            const url = `${API_BASE_URL}/api/product/${uuid}`
             const method = "PUT"
 
             const response = await fetch(url, {
@@ -751,7 +752,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             {technicalSheetData.url && !technicalSheetData.isDeleted ? (
                                 <div className="flex items-center space-x-2 mb-2">
                                     <a
-                                        href={technicalSheetData.url}
+                                        href={`${API_BASE_URL}${technicalSheetData.url}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-600 hover:text-blue-800 underline"

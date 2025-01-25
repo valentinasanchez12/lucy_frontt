@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import AutocompleteSearch from "./AutocompleteSearch.tsx";
+import { API_BASE_URL } from "../../utils/ApiUrl.tsx";
 
 interface Brand {
     uuid: string;
@@ -51,7 +52,7 @@ const Home = () => {
         const fetchRandomProducts = async () => {
             setIsLoading(true)
             try {
-                const response = await fetch('http://localhost:8080/api/product/random')
+                const response = await fetch(`${API_BASE_URL}/api/product/random`)
                 if (!response.ok) {
                     throw new Error('Failed to fetch products')
                 }
@@ -104,7 +105,7 @@ const Home = () => {
                         {products.map((product) => (
                             <div key={product.uuid} className="bg-white rounded-lg shadow-md overflow-hidden">
                                 <img
-                                    src={product.image.startsWith('http') ? product.image : `http://localhost:8080/static/${product.image}`}
+                                    src={`${API_BASE_URL}${product.image}`}
                                     alt={product.generic_name}
                                     className="w-full h-48 object-cover"
                                 />

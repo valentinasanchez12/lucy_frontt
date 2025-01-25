@@ -5,6 +5,7 @@ import ProductCard from "./ProductCard"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import ErrorAlert from "../ui/ErrorAlert"
 import NoResultsMessage from "../ui/NoResultsMessage"
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 
 interface Brand {
   uuid: string
@@ -39,7 +40,7 @@ export default function ResultadosBusqueda() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`http://localhost:8080/api/product/search?q=${encodeURIComponent(query)}`)
+      const response = await fetch(`${API_BASE_URL}/api/product/search?q=${encodeURIComponent(query)}`)
       if (!response.ok) {
         throw new Error("Failed to fetch products")
       }

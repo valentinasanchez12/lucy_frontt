@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider, useQuery } from "react-query"
 import Select from "react-select"
 import { useDropzone } from "react-dropzone"
 import { X, Plus } from "lucide-react"
+import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
 
 // Create a client
 const queryClient = new QueryClient()
@@ -217,7 +218,7 @@ const capitalizeWords = (str: string) => {
 
 // Functions to fetch data from API
 const fetchMarcas = async (): Promise<Option[]> => {
-  const response = await fetch("http://localhost:8080/api/brand")
+  const response = await fetch(`${API_BASE_URL}/api/brand/`)
   if (!response.ok) {
     throw new Error("Error fetching brands")
   }
@@ -235,7 +236,7 @@ const fetchMarcas = async (): Promise<Option[]> => {
 }
 
 const fetchCategorias = async (): Promise<Option[]> => {
-  const response = await fetch("http://localhost:8080/api/category")
+  const response = await fetch(`${API_BASE_URL}api/category/`)
   if (!response.ok) {
     throw new Error("Error fetching categories")
   }
@@ -253,7 +254,7 @@ const fetchCategorias = async (): Promise<Option[]> => {
 }
 
 const fetchRegistrosSanitarios = async (): Promise<Option[]> => {
-  const response = await fetch("http://localhost:8080/api/sanitary-registry")
+  const response = await fetch(`${API_BASE_URL}/api/sanitary-registry/`)
   if (!response.ok) {
     throw new Error("Error fetching sanitary registries")
   }
@@ -474,7 +475,7 @@ const FormularioProductoInterno: React.FC = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/product/", {
+      const response = await fetch(`${API_BASE_URL}/api/product/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
