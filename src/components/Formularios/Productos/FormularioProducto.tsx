@@ -236,7 +236,7 @@ const fetchMarcas = async (): Promise<Option[]> => {
 }
 
 const fetchCategorias = async (): Promise<Option[]> => {
-  const response = await fetch(`${API_BASE_URL}api/category/`)
+  const response = await fetch(`${API_BASE_URL}/api/category/`)
   if (!response.ok) {
     throw new Error("Error fetching categories")
   }
