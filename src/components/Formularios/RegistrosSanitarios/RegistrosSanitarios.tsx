@@ -103,7 +103,7 @@ async function createRegistroSanitario(registro: RegistroSanitarioInput): Promis
 }
 
 async function updateRegistroSanitario(uuid: string, registro: Partial<RegistroSanitarioInput>): Promise<RegistroSanitario> {
-  const response = await fetch(`${API_URL}/${uuid}`, {
+  const response = await fetch(`${API_URL}${uuid}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ async function updateRegistroSanitario(uuid: string, registro: Partial<RegistroS
 }
 
 async function deleteRegistroSanitario(uuid: string): Promise<void> {
-  const response = await fetch(`${API_URL}/${uuid}`, {
+  const response = await fetch(`${API_URL}${uuid}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
