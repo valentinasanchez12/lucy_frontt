@@ -167,7 +167,7 @@ export default function RegistroCategorias() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch(`${API_BASE_URL}'/api/category/`)
+      const response = await fetch(`${API_BASE_URL}/api/category/`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
