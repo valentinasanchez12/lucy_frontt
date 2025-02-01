@@ -1,6 +1,6 @@
 import React from 'react'
 import { FileText } from 'lucide-react'
-import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../utils/ApiUrl.tsx";
 
 export interface SanitaryRegistry {
     number_registry: string;

@@ -1,12 +1,12 @@
 import { useState, useEffect, Key} from "react"
 import {useParams} from "react-router-dom"
 import {FileText, Building2} from "lucide-react"
-import CommentSection, {Comment} from "./CommentSection"
-import CharacteristicsSection, {Characteristic} from "./CharacteristicsSection"
-import ProviderModal from "./ProviderModal"
-import SanitaryRegistrySection, {SanitaryRegistry} from "./SanitaryRegistrySection"
-import ImageCarousel from "./ImageCarousel"
-import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import CommentSection, {Comment} from "./CommentSection.tsx"
+import CharacteristicsSection, {Characteristic} from "./CharacteristicsSection.tsx"
+import ProviderModal from "./ProviderModal.tsx"
+import SanitaryRegistrySection, {SanitaryRegistry} from "./SanitaryRegistrySection.tsx"
+import ImageCarousel from "./ImageCarousel.tsx"
+import {API_BASE_URL} from "../utils/ApiUrl.tsx";
 
 
 interface ProductData {
@@ -108,7 +108,12 @@ export default function DetalleProducto() {
 
 const ProductDetails = ({product}: { product: ProductData }) => {
   const [showFullDescription, setShowFullDescription] = useState(false)
-  const truncatedDescription = product.description.split(" ").slice(0, 100).join(" ")
+  const [showFullComposition, setShowFullComposition] = useState(false);
+  const [showFullUse, setShowFullUse] = useState(false);
+
+  const truncatedDescription = product.description.split(" ").slice(0, 30).join(" ")
+  const truncatedComposition = product.composition.split(" ").slice(0, 30).join(" ");
+  const truncatedUse = product.use.split(" ").slice(0, 30).join(" ");
 
   return (
       <div className="space-y-6">
@@ -134,13 +139,13 @@ const ProductDetails = ({product}: { product: ProductData }) => {
                 .join(" ")}
           </p>
           <div>
-            <p>
+            <p style={{ whiteSpace: "pre-line" }}>
               <strong className="text-[#00632C]">Descripción:</strong>{" "}
               {showFullDescription
                   ? product.description.charAt(0).toUpperCase() + product.description.slice(1).toLowerCase()
                   : truncatedDescription.charAt(0).toUpperCase() + truncatedDescription.slice(1).toLowerCase()}
             </p>
-            {product.description.split(" ").length > 100 && (
+            {product.description.split(" ").length > 30 && (
                 <a
                     href="#"
                     onClick={(e) => {
@@ -153,13 +158,24 @@ const ProductDetails = ({product}: { product: ProductData }) => {
                 </a>
             )}
           </div>
-          <p>
+          <p style={{ whiteSpace: "pre-line" }}>
             <strong className="text-[#00632C]">Composición:</strong>{" "}
-            {product.composition
-                .split(" ")
-                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(" ")}
+            {showFullComposition
+                ? product.composition.charAt(0).toUpperCase() + product.composition.slice(1).toLowerCase()
+                : truncatedComposition.charAt(0).toUpperCase() + truncatedComposition.slice(1).toLowerCase()}
           </p>
+          {product.composition.split(" ").length > 30 && (
+              <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowFullComposition(!showFullComposition);
+                  }}
+                  className="mt-2 text-[#00632C] hover:text-[#FFD700] underline inline-block"
+              >
+                {showFullComposition ? "Ver menos" : "Ver más"}
+              </a>
+          )}
           <p>
             <strong className="text-[#00632C]">Unidad de Medida:</strong>{" "}
             {product.measurement
@@ -174,20 +190,31 @@ const ProductDetails = ({product}: { product: ProductData }) => {
                 .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
-          <p>
+          <p style={{ whiteSpace: "pre-line" }}>
             <strong className="text-[#00632C]">Referencia del Producto:</strong>{" "}
             {product.reference
                 .split(" ")
                 .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join(" ")}
           </p>
-          <p>
+          <p style={{ whiteSpace: "pre-line" }}>
             <strong className="text-[#00632C]">Uso:</strong>{" "}
-            {product.use
-                .split(" ")
-                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(" ")}
+            {showFullUse
+                ? product.use.charAt(0).toUpperCase() + product.use.slice(1).toLowerCase()
+                : truncatedUse.charAt(0).toUpperCase() + truncatedUse.slice(1).toLowerCase()}
           </p>
+          {product.use.split(" ").length > 30 && (
+              <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowFullUse(!showFullUse);
+                  }}
+                  className="mt-2 text-[#00632C] hover:text-[#FFD700] underline inline-block"
+              >
+                {showFullUse ? "Ver menos" : "Ver más"}
+              </a>
+          )}
           <p>
             <strong className="text-[#00632C]">Método de Esterilizar:</strong>{" "}
             {product.sanitize_method

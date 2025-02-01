@@ -4,9 +4,9 @@ import React from 'react'
 const Logo: React.FC = () => {
   return (
     <div className="flex items-center">
-      <a href="/" className="">
+      <a href="/public" className="">
       <img 
-          src="/static/logo_grande.png" 
+          src="/logo_grande.png"
           alt="Logo" 
           style={{
             width: 'auto',

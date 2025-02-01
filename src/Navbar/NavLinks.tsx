@@ -1,6 +1,6 @@
 import React from 'react'
-import NavItem from './NavItem'
-import DropdownMenu from './DropdownMenu'
+import NavItem from './NavItem.tsx'
+import DropdownMenu from './DropdownMenu.tsx'
 
 const NavLinks: React.FC = () => {
   return (

@@ -1,6 +1,6 @@
 import type React from "react"
 import { useState } from "react"
-import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../utils/ApiUrl.tsx";
 
 export interface Comment {
     uuid: string

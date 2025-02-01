@@ -1,6 +1,6 @@
 import React from 'react'
-import Logo from './Logo'
-import NavLinks from './NavLinks'
+import Logo from './Logo.tsx'
+import NavLinks from './NavLinks.tsx'
 
 const Navbar: React.FC = () => {
   return (

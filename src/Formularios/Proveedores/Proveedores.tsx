@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
-import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
+import Paginacion from "../../components/Paginacion/Paginacion.tsx";
+import InputField from "../../components/ui/InputFile.tsx";
+import SelectField from "../../components/ui/SelectField.tsx";
 
 type Proveedor = {
   id: string;
@@ -55,16 +59,16 @@ const capitalizeWords = (str: string) => {
 
 export default function RegistroProveedores() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
   const [formData, setFormData] = useState<Omit<Proveedor, 'id'>>(emptyFormData)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [searchTermProveedores, setSearchTermProveedores] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [busqueda, setBusqueda] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
   const [errors, setErrors] = useState<string[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
-  const proveedoresPorPagina = 4
+  const itemsPorPagina = 4
 
   useEffect(() => {
     fetchProveedores()
@@ -141,9 +145,18 @@ export default function RegistroProveedores() {
     }
   }
 
+  const handleBusqueda = (nuevaBusqueda: string) => {
+    setBusqueda(nuevaBusqueda)
+    setPaginaActual(1)
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSelectChange = (name: string) => (option: any) => {
+    setFormData((prev) => ({ ...prev, [name]: option.value }))
   }
 
   const handleMarcaSelect = (brand: Brand) => {
@@ -252,21 +265,23 @@ export default function RegistroProveedores() {
     setEditingId(proveedor.id)
   }
 
-  const filteredProveedores = proveedores.filter(proveedor =>
-      proveedor.empresa.toLowerCase().includes(searchTermProveedores.toLowerCase()) ||
-      proveedor.asesor.toLowerCase().includes(searchTermProveedores.toLowerCase()) ||
-      proveedor.email.toLowerCase().includes(searchTermProveedores.toLowerCase())
+  const proveedoresFiltrados = proveedores.filter(proveedor =>
+      proveedor.empresa.toLowerCase().includes(busqueda.toLowerCase()) ||
+      proveedor.asesor.toLowerCase().includes(busqueda.toLowerCase()) ||
+      proveedor.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+      proveedor.nit.toLowerCase().includes(busqueda.toLowerCase()) ||
+      proveedor.telefono.toLowerCase().includes(busqueda.toLowerCase()) ||
+      proveedor.tipoPersona.toLowerCase().includes(busqueda.toLowerCase()) ||
+      proveedor.marcas.some(marca => marca.name.toLowerCase().includes(busqueda.toLowerCase()))
   )
 
-  const indexOfLastProveedor = currentPage * proveedoresPorPagina
-  const indexOfFirstProveedor = indexOfLastProveedor - proveedoresPorPagina
-  const currentProveedores = filteredProveedores.slice(indexOfFirstProveedor, indexOfLastProveedor)
+  const totalPaginas = Math.ceil(proveedoresFiltrados.length / itemsPorPagina)
+  const indiceInicial = (paginaActual - 1) * itemsPorPagina
+  const indiceFinal = indiceInicial + itemsPorPagina
+  const proveedoresPaginados = proveedoresFiltrados.slice(indiceInicial, indiceFinal)
 
-  const totalPages = Math.ceil(filteredProveedores.length / proveedoresPorPagina)
-
-  const pageNumbers = []
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i)
+  const cambiarPagina = (pagina: number) => {
+    setPaginaActual(pagina)
   }
 
   const filteredBrands = brands.filter(brand =>
@@ -278,8 +293,8 @@ export default function RegistroProveedores() {
   }
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTermProveedores])
+    setPaginaActual(1)
+  }, [busqueda])
 
   return (
       <div className="flex h-screen bg-[#eeeeee]">
@@ -308,85 +323,77 @@ export default function RegistroProveedores() {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="empresa" className="block text-sm font-bold text-[#333333]">Nombre de la empresa</label>
-              <input
-                  id="empresa"
+              <InputField
+                  label="Nombre de la empresa"
                   name="empresa"
                   value={formData.empresa}
                   onChange={handleInputChange}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+                  placeholder="Nombre de la empresa"
                   required
               />
             </div>
             <div>
-              <label htmlFor="tipoPersona" className="block text-sm font-bold text-[#333333]">Tipo de persona</label>
-              <select
-                  id="tipoPersona"
+              <SelectField
+                  label="Tipo de persona"
+                  placeholder="Seleccione un tipo"
                   name="tipoPersona"
                   value={formData.tipoPersona}
-                  onChange={handleInputChange}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+                  onChange={handleSelectChange}
+                  options={[
+                      { value: 'Persona Natural', label: 'Persona Natural' },
+                      { value: 'Persona Jurídica', label: 'Persona Jurídica' },
+                  ]}
                   required
-              >
-                <option value="">Seleccione un tipo</option>
-                <option value="Persona Natural">Persona Natural</option>
-                <option value="Persona Jurídica">Persona Jurídica</option>
-              </select>
+              />
             </div>
             <div>
-              <label htmlFor="nit" className="block text-sm font-bold text-[#333333]">NIT</label>
-              <input
-                  id="nit"
+              <InputField
+                  label="NIT"
                   name="nit"
                   value={formData.nit}
                   onChange={handleInputChange}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+                  placeholder="NIT"
                   required
               />
             </div>
             <div>
-              <label htmlFor="asesor" className="block text-sm font-bold text-[#333333]">Nombre de la asesora comercial</label>
-              <input
-                  id="asesor"
+              <InputField
+                  label="Nombre del asesor comercial"
                   name="asesor"
                   value={formData.asesor}
                   onChange={handleInputChange}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+                  placeholder="Nombre del asesor comercial"
                   required
               />
             </div>
             <div>
-              <label htmlFor="telefono" className="block text-sm font-bold text-[#333333]">Teléfono</label>
-              <input
-                  id="telefono"
+              <InputField
+                  label="Teléfono"
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleInputChange}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+                  placeholder="Teléfono"
                   required
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-bold text-[#333333]">Email</label>
-              <input
-                  id="email"
+              <InputField
+                  label="Email"
                   name="email"
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
+                  placeholder="Email"
                   required
               />
             </div>
             <div className="relative" ref={dropdownRef}>
-              <label htmlFor="marcas" className="block text-sm font-bold text-[#333333]">Marcas</label>
-              <input
-                  id="marcas"
+              <InputField
+                  label="Marcas"
                   name="marcas"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => setIsDropdownOpen(true)}
-                  className="mt-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#00632C] focus:ring focus:ring-[#00632C] focus:ring-opacity-50 text-lg py-2"
                   placeholder="Buscar marcas..."
               />
               {isDropdownOpen && (
@@ -429,31 +436,9 @@ export default function RegistroProveedores() {
         </div>
         <div className="w-3/5 p-6 overflow-auto max-h-screen">
           <h2 className="text-2xl font-bold mb-4 text-[#00632C]">Lista de Proveedores</h2>
-          <div className="relative mb-4">
-            <input
-                type="text"
-                placeholder="Buscar proveedores..."
-                value={searchTermProveedores}
-                onChange={(e) => setSearchTermProveedores(e.target.value)}
-                className="pl-4 pr-10 py-2 w-full border border-gray-300 rounded-full bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-[#00632C] focus:border-[#00632C]"
-            />
-            {searchTermProveedores ? (
-                <button
-                    onClick={() => setSearchTermProveedores('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-            ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            )}
-          </div>
+          <BarraBusqueda placeholder="Buscar provedores" busqueda={busqueda} setBusqueda={handleBusqueda} />
           <div className="space-y-4">
-            {currentProveedores.map(proveedor => (
+            {proveedoresPaginados.map(proveedor => (
                 <div key={proveedor.id} className="bg-white rounded-lg shadow-md p-4">
                   <div className="flex justify-between">
                     <div className="space-y-2 flex-grow">
@@ -487,41 +472,11 @@ export default function RegistroProveedores() {
                 </div>
             ))}
           </div>
-          <div className="flex justify-center mt-4 space-x-2">
-            <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`px-3 py-2 rounded-md bg-white text-[#00632C] border border-[#00632C] hover:bg-[#00632C] hover:text-white transition-colors ${
-                    currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            {pageNumbers.map(number => (
-                <button
-                    key={number}
-                    onClick={() => setCurrentPage(number)}
-                    className={`px-3 py-2 rounded-md ${
-                        currentPage === number ? 'bg-[#00632C] text-white' : 'bg-white text-[#00632C] border border-[#00632C]'
-                    }`}
-                >
-                  {number}
-                </button>
-            ))}
-            <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className={`px-3 py-2 rounded-md bg-white text-[#00632C] border border-[#00632C] hover:bg-[#00632C] hover:text-white transition-colors ${
-                    currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          <Paginacion
+              paginaActual={paginaActual}
+              totalPaginas={totalPaginas}
+              cambiarPagina={cambiarPagina}
+          />
         </div>
       </div>
   )

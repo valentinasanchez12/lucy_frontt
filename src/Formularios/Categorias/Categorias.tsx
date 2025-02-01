@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
-import { Search, X } from 'lucide-react'
-import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
+import Paginacion from "../../components/Paginacion/Paginacion.tsx";
+import InputField from "../../components/ui/InputFile.tsx";
 
 interface Categoria {
   uuid: string;
@@ -30,13 +32,14 @@ const FormularioCategoria: React.FC<{
       {editando ? 'Editar' : 'Registrar'} Categoría
     </h2>
     <form onSubmit={agregarCategoria} className="space-y-4">
-      <input
-        type="text"
-        value={nombreCategoria}
-        onChange={(e) => setNombreCategoria(e.target.value)}
-        placeholder="Nombre de Categoría"
-        className="w-full px-3 py-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00632C]"
-        disabled={isLoading}
+      <InputField
+          label="Nombre de Categoría"
+          name="nombreCategoria"
+          type="text"
+          value={nombreCategoria}
+          onChange={(e) => setNombreCategoria(e.target.value)}
+          placeholder="Nombre de Categoría"
+          required
       />
       <button 
         type="submit" 
@@ -48,38 +51,6 @@ const FormularioCategoria: React.FC<{
     </form>
   </div>
 )
-
-const BarraBusqueda: React.FC<{
-  busqueda: string;
-  setBusqueda: (busqueda: string) => void;
-}> = ({ busqueda, setBusqueda }) => {
-  const limpiarBusqueda = () => {
-    setBusqueda('');
-  };
-
-  return (
-    <div className="mb-4 relative">
-      <input
-        type="text"
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar categoría"
-        className="w-full pl-4 pr-10 py-2 border border-[#80C68C] rounded-full focus:outline-none focus:ring-2 focus:ring-[#00632C]"
-      />
-      {busqueda ? (
-        <button
-          onClick={limpiarBusqueda}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00632C] hover:text-[#004d22]"
-          aria-label="Limpiar búsqueda"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      ) : (
-        <Search className="h-5 w-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00632C]" aria-hidden="true" />
-      )}
-    </div>
-  );
-};
 
 const CategoriaItem: React.FC<{
   categoria: Categoria;
@@ -108,48 +79,6 @@ const CategoriaItem: React.FC<{
         <span className="sr-only">Eliminar categoría</span>
       </button>
     </div>
-  </div>
-)
-
-const Paginacion: React.FC<{
-  paginaActual: number;
-  totalPaginas: number;
-  cambiarPagina: (pagina: number) => void;
-}> = ({ paginaActual, totalPaginas, cambiarPagina }) => (
-  <div className="mt-4 flex justify-center items-center space-x-2">
-    <button
-      onClick={() => cambiarPagina(paginaActual - 1)}
-      disabled={paginaActual === 1}
-      className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-      aria-label="Página anterior"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-      </svg>
-    </button>
-    {[...Array(totalPaginas)].map((_, index) => (
-      <button
-        key={index}
-        onClick={() => cambiarPagina(index + 1)}
-        className={`${
-          paginaActual === index + 1
-            ? 'bg-[#00632C] text-white'
-            : 'bg-white text-[#00632C] hover:bg-[#80C68C] hover:text-[#00632C]'
-        } border border-[#00632C] px-3 py-1 rounded-md`}
-      >
-        {index + 1}
-      </button>
-    ))}
-    <button
-      onClick={() => cambiarPagina(paginaActual + 1)}
-      disabled={paginaActual === totalPaginas}
-      className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-      aria-label="Página siguiente"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-      </svg>
-    </button>
   </div>
 )
 
@@ -307,7 +236,7 @@ export default function RegistroCategorias() {
       </div>
       <div className="w-[70%] p-8">
         <h2 className="text-2xl font-bold mb-4 text-[#00632C]">Lista de Categorías</h2>
-        <BarraBusqueda busqueda={busqueda} setBusqueda={setBusqueda} />
+        <BarraBusqueda placeholder="Buscar categoría" busqueda={busqueda} setBusqueda={setBusqueda} />
         {error && <div className="text-red-500 mb-4">{error}</div>}
         <div className="space-y-4">
           {categoriasPaginadas.map(categoria => (

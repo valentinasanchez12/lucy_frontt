@@ -1,6 +1,6 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
-import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../utils/ApiUrl.tsx";
 
 interface ImageCarouselProps {
     images: string[];

@@ -1,10 +1,12 @@
 import type React from "react"
 import { useState, useCallback } from "react"
 import { QueryClient, QueryClientProvider, useQuery } from "react-query"
-import Select from "react-select"
 import { useDropzone } from "react-dropzone"
 import { X, Plus } from "lucide-react"
-import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import InputField from "../../components/ui/InputFile.tsx";
+import SelectField from "../../components/ui/SelectField.tsx";
+import TextareaField from "../../components/ui/TextareaField.tsx";
 
 // Create a client
 const queryClient = new QueryClient()
@@ -39,75 +41,11 @@ type Option = {
 }
 
 // Components
-const InputField: React.FC<{
-  label: string
-  name: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  placeholder: string
-  isTextarea?: boolean
-  required?: boolean
-}> = ({ label, name, value, onChange, placeholder, isTextarea = false, required = false }) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-[#00632C] mb-1">
-        {label}
-      </label>
-      {isTextarea ? (
-          <textarea
-              id={name}
-              name={name}
-              value={value}
-              onChange={onChange}
-              placeholder={placeholder}
-              rows={4}
-              className="w-full p-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00873D]"
-              required={required}
-          />
-      ) : (
-          <input
-              type="text"
-              id={name}
-              name={name}
-              value={value}
-              onChange={onChange}
-              placeholder={placeholder}
-              className="w-full p-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00873D]"
-              required={required}
-          />
-      )}
-    </div>
-)
-
-const SelectField: React.FC<{
-  label: string
-  name: string
-  options: Option[]
-  onChange: (option: any) => void
-  placeholder: string
-  isMulti?: boolean
-  required?: boolean
-}> = ({ label, name, options, onChange, placeholder, isMulti = false, required = false }) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-[#00632C] mb-1">
-        {label}
-      </label>
-      <Select
-          options={options}
-          placeholder={placeholder}
-          styles={customSelectStyles}
-          onChange={onChange}
-          isMulti={isMulti}
-          className="react-select-container"
-          classNamePrefix="react-select"
-          required={required}
-      />
-    </div>
-)
-
 const ImageDropzone: React.FC<{
   onDrop: (acceptedFiles: File[]) => void
   imagenes: File[]
-}> = ({ onDrop, imagenes }) => {
+  onDeleteNew: (index: number) => void
+}> = ({ onDrop, imagenes, onDeleteNew }) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/*": [] },
@@ -132,14 +70,26 @@ const ImageDropzone: React.FC<{
         </div>
         {imagenes.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm font-medium text-[#00632C] mb-2">Imágenes seleccionadas:</p>
-              <ul className="list-disc pl-5">
+              <p className="text-sm font-medium text-[#00632C] mb-2">Imágenes:</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {imagenes.map((file, index) => (
-                    <li key={index} className="text-sm text-[#333333]">
-                      {file.name}
-                    </li>
+                    <div key={index} className="relative">
+                      <img
+                          src={URL.createObjectURL(file) || "/placeholder.svg"}
+                          alt={`New image ${index + 1}`}
+                          className="w-full h-auto rounded-md"
+                      />
+                      <button
+                          type="button"
+                          onClick={() => onDeleteNew(index)}
+                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1"
+                          aria-label={`Delete new image ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                 ))}
-              </ul>
+              </div>
             </div>
         )}
       </div>
@@ -174,41 +124,6 @@ const ErrorMessage: React.FC<{ message: string; onDismiss: () => void }> = ({ me
     </div>
 )
 
-// Styles for selects
-const customSelectStyles = {
-  control: (provided: any) => ({
-    ...provided,
-    borderColor: "#80C68C",
-    "&:hover": {
-      borderColor: "#00873D",
-    },
-  }),
-  option: (provided: any, state: { isSelected: any }) => ({
-    ...provided,
-    backgroundColor: state.isSelected ? "#00873D" : "white",
-    color: state.isSelected ? "white" : "#333333",
-    "&:hover": {
-      backgroundColor: "#00632C",
-      color: "white",
-    },
-  }),
-  multiValue: (provided: any) => ({
-    ...provided,
-    backgroundColor: "#80C68C",
-  }),
-  multiValueLabel: (provided: any) => ({
-    ...provided,
-    color: "#333333",
-  }),
-  multiValueRemove: (provided: any) => ({
-    ...provided,
-    color: "#333333",
-    "&:hover": {
-      backgroundColor: "#00632C",
-      color: "white",
-    },
-  }),
-}
 
 const capitalizeWords = (str: string) => {
   return str.replace(/\b\p{L}[\p{L}'-]*\b/gu, (word) => {
@@ -306,7 +221,7 @@ const FormularioProductoInterno: React.FC = () => {
     registroSanitario: "",
     estado: true,
     comentarios: "",
-    characteristics: [{ name: "", description: "" }],
+    characteristics: [{ name: "", description: "" }]
   })
 
   const [imageFiles, setImageFiles] = useState<File[]>([])
@@ -502,6 +417,10 @@ const FormularioProductoInterno: React.FC = () => {
     }
   }
 
+  const handleDeleteNewImage = (index: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
   return (
       <div className="min-h-screen bg-[#eeeeee] text-[#333333] p-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -533,13 +452,12 @@ const FormularioProductoInterno: React.FC = () => {
               />
             </div>
 
-            <InputField
+            <TextareaField
                 label="Descripción"
                 name="descripcion"
                 value={producto.descripcion}
                 onChange={handleInputChange}
                 placeholder="Ingrese la descripción del producto"
-                isTextarea
                 required
             />
 
@@ -561,19 +479,16 @@ const FormularioProductoInterno: React.FC = () => {
                   required
               />
             </div>
-
-            <InputField
+            <TextareaField
                 label="Composición"
                 name="composicion"
                 value={producto.composicion}
                 onChange={handleInputChange}
                 placeholder="Ingrese la composición del producto"
-                isTextarea
                 required
             />
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField
+              <TextareaField
                   label="Referencia del Producto"
                   name="referencia"
                   value={producto.referencia}
@@ -581,7 +496,7 @@ const FormularioProductoInterno: React.FC = () => {
                   placeholder="Ingrese la referencia"
                   required
               />
-              <InputField
+              <TextareaField
                   label="Uso"
                   name="uso"
                   value={producto.uso}
@@ -590,7 +505,6 @@ const FormularioProductoInterno: React.FC = () => {
                   required
               />
             </div>
-
             <InputField
                 label="Método de Esterilizar"
                 name="metodoEsterilizar"
@@ -599,13 +513,17 @@ const FormularioProductoInterno: React.FC = () => {
                 placeholder="Ingrese el método de esterilización"
                 required
             />
-
-            <ImageDropzone onDrop={onDropImages} imagenes={imageFiles} />
+            <ImageDropzone
+                onDrop={onDropImages}
+                imagenes={imageFiles}
+                onDeleteNew={handleDeleteNewImage}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SelectField
                   label="Marca"
                   name="marca"
+                  value=""
                   options={marcas}
                   onChange={handleSelectChange("marca")}
                   placeholder="Seleccione una marca"
@@ -614,6 +532,7 @@ const FormularioProductoInterno: React.FC = () => {
               <SelectField
                   label="Categoría"
                   name="categoria"
+                  value=""
                   options={categorias}
                   onChange={handleSelectChange("categoria")}
                   placeholder="Seleccione una categoría"
@@ -637,6 +556,7 @@ const FormularioProductoInterno: React.FC = () => {
               <SelectField
                   label="Registro Sanitario"
                   name="registroSanitario"
+                  value=""
                   options={registrosSanitarios}
                   onChange={handleSelectChange("registroSanitario")}
                   placeholder="Seleccione un registro sanitario"
@@ -698,13 +618,12 @@ const FormularioProductoInterno: React.FC = () => {
               </button>
             </div>
 
-            <InputField
+            <TextareaField
                 label="Comentarios"
                 name="comentarios"
                 value={producto.comentarios}
                 onChange={handleInputChange}
                 placeholder="Ingrese comentarios adicionales sobre el producto"
-                isTextarea
             />
 
             <div className="flex justify-end">

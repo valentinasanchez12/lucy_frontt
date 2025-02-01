@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import ChevronDown from './ChevronDown'
+import ChevronDown from './ChevronDown.tsx'
 
 const DropdownMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)

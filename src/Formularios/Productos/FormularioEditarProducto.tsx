@@ -5,7 +5,8 @@ import Select from "react-select"
 import { useDropzone } from "react-dropzone"
 import { X, Plus } from "lucide-react"
 import { useParams } from "react-router-dom"
-import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import TextareaField from "../../components/ui/TextareaField.tsx";
 
 // Create a client
 const queryClient = new QueryClient()
@@ -693,14 +694,14 @@ const FormularioEditarProductoInterno: React.FC = () => {
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <InputField
+                        <TextareaField
                             label="Referencia del Producto"
                             name="referencia"
                             value={producto.referencia}
                             onChange={handleInputChange}
                             placeholder="Ingrese la referencia"
                         />
-                        <InputField
+                        <TextareaField
                             label="Uso"
                             name="uso"
                             value={producto.uso}
@@ -708,7 +709,6 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             placeholder="Ingrese el uso del producto"
                         />
                     </div>
-
                     <InputField
                         label="Método de Esterilizar"
                         name="metodoEsterilizar"
@@ -716,7 +716,6 @@ const FormularioEditarProductoInterno: React.FC = () => {
                         onChange={handleInputChange}
                         placeholder="Ingrese el método de esterilización"
                     />
-
                     <ImageDropzone
                         onDrop={onDropImages}
                         imagenes={newImageFiles}

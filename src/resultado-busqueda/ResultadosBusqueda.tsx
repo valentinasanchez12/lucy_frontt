@@ -1,11 +1,11 @@
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
-import ProductCard from "./ProductCard"
-import LoadingSpinner from "../ui/LoadingSpinner"
-import ErrorAlert from "../ui/ErrorAlert"
-import NoResultsMessage from "../ui/NoResultsMessage"
-import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import ProductCard from "./ProductCard.tsx"
+import LoadingSpinner from "../components/ui/LoadingSpinner.tsx"
+import ErrorAlert from "../components/ui/ErrorAlert.tsx"
+import NoResultsMessage from "../components/ui/NoResultsMessage.tsx"
+import {API_BASE_URL} from "../utils/ApiUrl.tsx";
 
 interface Brand {
   uuid: string

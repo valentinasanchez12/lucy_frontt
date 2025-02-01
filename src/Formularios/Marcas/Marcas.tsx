@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
+import Paginacion from "../../components/Paginacion/Paginacion.tsx";
+import InputField from "../../components/ui/InputFile.tsx";
 
 interface Marca {
   uuid: string;
@@ -22,12 +25,14 @@ const FormularioMarca: React.FC<{
       {editando ? 'Editar Marca' : 'Registrar Marca'}
     </h2>
     <form onSubmit={agregarMarca} className="space-y-4">
-      <input
-        type="text"
-        value={nombreMarca}
-        onChange={(e) => setNombreMarca(e.target.value)}
-        placeholder="Nombre de Marca"
-        className="w-full px-3 py-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00632C]"
+      <InputField
+          label="Nombre de la Marca"
+          name="nombreMarca"
+          type="text"
+          value={nombreMarca}
+          onChange={(e) => setNombreMarca(e.target.value)}
+          placeholder="Ingresa el Nombre de la marca"
+          required
       />
       <button 
         type="submit" 
@@ -38,7 +43,7 @@ const FormularioMarca: React.FC<{
     </form>
   </div>
 )
-
+/*
 // Componente para la barra de búsqueda
 const BarraBusqueda: React.FC<{
   busqueda: string;
@@ -47,7 +52,6 @@ const BarraBusqueda: React.FC<{
   const handleReset = () => {
     setBusqueda('');
   };
-
   return (
     <div className="mb-4 relative">
       <input
@@ -75,7 +79,7 @@ const BarraBusqueda: React.FC<{
     </div>
   );
 };
-
+*/
 // Componente para cada item de marca en la lista
 const MarcaItem: React.FC<{
   marca: Marca;
@@ -106,7 +110,7 @@ const MarcaItem: React.FC<{
     </div>
   </div>
 )
-
+/*
 // Componente para la paginación
 const Paginacion: React.FC<{
   paginaActual: number;
@@ -149,7 +153,7 @@ const Paginacion: React.FC<{
     </button>
   </div>
 )
-
+*/
 // Componente principal
 export default function RegistroMarcas() {
   const [marcas, setMarcas] = useState<Marca[]>([])
@@ -289,7 +293,7 @@ export default function RegistroMarcas() {
       </div>
       <div className="w-[70%] p-8">
         <h2 className="text-2xl font-bold mb-4 text-[#00632C]">Lista de Marcas</h2>
-        <BarraBusqueda busqueda={busqueda} setBusqueda={handleBusqueda} />
+        <BarraBusqueda placeholder="Buscar Marcas" busqueda={busqueda} setBusqueda={handleBusqueda} />
         {error && <div className="text-red-500 mb-4">{error}</div>}
         <div className="space-y-4">
           {marcasPaginadas.map(marca => (

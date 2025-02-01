@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { SearchIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react'
-import {API_BASE_URL} from "../../../utils/ApiUrl.tsx";
+import {PencilIcon, TrashIcon, X} from 'lucide-react'
+import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
+import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
+import Paginacion from "../../components/Paginacion/Paginacion.tsx";
+import InputField from "../../components/ui/InputFile.tsx";
+import SelectField from "../../components/ui/SelectField.tsx";
 
 // Definición de tipos
 interface RegistroSanitario {
@@ -27,35 +31,6 @@ interface RegistroSanitarioInput {
 }
 
 // Componentes de UI
-const Input: React.FC<{
-  label: string;
-} & React.InputHTMLAttributes<HTMLInputElement>> = ({ label, ...props }) => (
-  <div className="mb-4">
-    <label className="block text-sm font-bold mb-2" htmlFor={props.id}>{label}</label>
-    <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" {...props} />
-  </div>
-)
-
-const Select = ({
-                  label,
-                  options,
-                  ...props
-                }: {
-  label: string;
-  options: { value: string; label: string }[];
-  [key: string]: any;
-}) => (
-  <div className="mb-4">
-    <label className="block text-sm font-bold mb-2" htmlFor={props.id}>{label}</label>
-    <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" {...props}>
-      <option value="">Seleccione una opción</option>
-      {options.map(option => (
-        <option key={option.value} value={option.value}>{option.label}</option>
-      ))}
-    </select>
-  </div>
-)
-
 const Button: React.FC <{
   className?: string;
   children: React.ReactNode;
@@ -146,10 +121,16 @@ export default function RegistroSanitarioComponent() {
     file_content: '',
   })
   const [editando, setEditando] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
   const [error, setError] = useState<string | null>(null)
-  const itemsPerPage = 3
+  const itemsPorPagina = 3
+  const [showFileInput, setShowFileInput] = useState<boolean>(true);
+
+  const handleBusqueda = (nuevaBusqueda: string) => {
+    setBusqueda(nuevaBusqueda)
+    setPaginaActual(1)
+  }
 
   useEffect(() => {
     fetchRegistrosSanitarios()
@@ -160,7 +141,7 @@ export default function RegistroSanitarioComponent() {
       });
   }, [])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
@@ -168,18 +149,33 @@ export default function RegistroSanitarioComponent() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (file.type !== 'application/pdf') {
+        alert('Solo se permiten archivos PDF.');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setFormData(prev => ({
           ...prev,
           file_name: file.name,
-          file_content: base64String.split(',')[1] // Remove data:application/pdf;base64, from the string
+          file_content: base64String.split(',')[1],  // Remove data:application/pdf;base64, from the string
         }));
+        setShowFileInput(false);  // Oculta el campo de carga una vez que se selecciona un archivo
       };
       reader.readAsDataURL(file);
     }
-  }
+  };
+
+  const handleDeleteFile = () => {
+    setFormData(prev => ({
+      ...prev,
+      file_name: '',
+      file_content: '',
+    }));
+    setShowFileInput(true);  // Muestra nuevamente el campo de carga de archivos
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -225,10 +221,11 @@ export default function RegistroSanitarioComponent() {
       cluster: registro.cluster,
       status: registro.status,
       type_risk: registro.type_risk,
-      file_name: registro.url ? registro.url.split('/').pop() || '' : '',
+      file_name: registro.url,
       file_content: '',
     })
     setEditando(registro.uuid)
+    setShowFileInput(false)
   }
 
   const eliminarRegistro = async (uuid: string) => {
@@ -241,24 +238,23 @@ export default function RegistroSanitarioComponent() {
     }
   }
 
-  const filteredRegistros = registros.filter(registro =>
-    registro.number_registry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    registro.cluster.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    registro.status.toLowerCase().includes(searchTerm.toLowerCase())
+  const registrosFiltrados = registros.filter(registro =>
+    registro.number_registry.toLowerCase().includes(busqueda.toLowerCase()) ||
+    registro.cluster.toLowerCase().includes(busqueda.toLowerCase()) ||
+    registro.status.toLowerCase().includes(busqueda.toLowerCase())
   )
 
-  const totalPages = Math.ceil(filteredRegistros.length / itemsPerPage)
-  const pageNumbers = Array.from({ length: Math.min(4, totalPages) }, (_, i) => i + 1)
+  const totalPaginas = Math.ceil(registrosFiltrados.length / itemsPorPagina)
+  const indiceInicial = (paginaActual - 1) * itemsPorPagina
+  const indiceFinal = indiceInicial + itemsPorPagina
+  const registrosPaginadas = registrosFiltrados.slice(indiceInicial, indiceFinal)
 
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredRegistros.slice(indexOfFirstItem, indexOfLastItem)
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber)
-
+  const cambiarPagina = (pagina: number) => {
+    setPaginaActual(pagina)
+  }
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm])
+    setPaginaActual(1)
+  }, [busqueda])
 
   return (
     <div className="flex h-screen bg-[#eeeeee]">
@@ -268,73 +264,102 @@ export default function RegistroSanitarioComponent() {
           {editando ? 'Editar Registro Sanitario' : 'Nuevo Registro Sanitario'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
+          <InputField
             label="Número del registro"
-            id="number_registry"
             name="number_registry"
             value={formData.number_registry}
             onChange={handleInputChange}
             placeholder="Ingrese el número de registro"
+            required
           />
-          <Input
-            label="Fecha de vencimiento"
-            id="expiration_date"
-            name="expiration_date"
-            type="date"
-            value={formData.expiration_date}
-            onChange={handleInputChange}
+          <InputField
+              placeholder="Ingrese la fecha de vencimiento"
+              label="Fecha de vencimiento"
+              name="expiration_date"
+              type="date"
+              value={formData.expiration_date}
+              onChange={handleInputChange}
+              required
           />
-          <Select
-            label="Grupo"
-            id="cluster"
-            name="cluster"
-            value={formData.cluster}
-            onChange={handleInputChange}
-            options={[
-              { value: "No requiere", label: "No requiere" },
-              { value: "Medicamentos", label: "Medicamentos" },
-              { value: "Cosmeticos", label: "Cosméticos" },
-              { value: "Odontologicos", label: "Odontológicos" },
-              { value: "Medico Quirurgicos", label: "Médico Quirúrgicos" },
-              { value: "Aseo y Limpieza", label: "Aseo y Limpieza" },
-              { value: "Reactivo Diagnostico", label: "Reactivo Diagnóstico" },
-              { value: "Homeopaticos", label: "Homeopáticos" },
-              { value: "Suplemento dietario", label: "Suplemento dietario" },
-              { value: "Fitoterapéutico", label: "Fitoterapéutico" },
-              { value: "Biológicos", label: "Biológicos" }
-            ]}
+          <SelectField
+              label="Grupo"
+              name="cluster"
+              value={formData.cluster}
+              onChange={handleInputChange}
+              placeholder="Seleccione un grupo"
+              options={[
+                { value: "No requiere", label: "No requiere" },
+                { value: "Medicamentos", label: "Medicamentos" },
+                { value: "Cosmeticos", label: "Cosméticos" },
+                { value: "Odontologicos", label: "Odontológicos" },
+                { value: "Medico Quirurgicos", label: "Médico Quirúrgicos" },
+                { value: "Aseo y Limpieza", label: "Aseo y Limpieza" },
+                { value: "Reactivo Diagnostico", label: "Reactivo Diagnóstico" },
+                { value: "Homeopaticos", label: "Homeopáticos" },
+                { value: "Suplemento dietario", label: "Suplemento dietario" },
+                { value: "Fitoterapéutico", label: "Fitoterapéutico" },
+                { value: "Biológicos", label: "Biológicos" }
+              ]}
           />
-          <Input
+          <InputField
             label="Tipo de riesgo"
-            id="type_risk"
             name="type_risk"
             value={formData.type_risk}
             onChange={handleInputChange}
             placeholder="Ingrese el tipo de riesgo"
           />
-          <Select
-            label="Estado del registro"
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleInputChange}
-            options={[
-              { value: "No requiere", label: "No requiere" },
-              { value: "Vigente", label: "Vigente" },
-              { value: "Vencido", label: "Vencido" },
-              { value: "Suspendido", label: "Suspendido" },
-              { value: "Cancelado", label: "Cancelado" },
-              { value: "En Trámite de Renovación", label: "En Trámite de Renovación" }
-            ]}
+          <SelectField
+              placeholder="Seleccione un estado"
+              label="Estado del registro"
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+              options={[
+                { value: "No requiere", label: "No requiere" },
+                { value: "Vigente", label: "Vigente" },
+                { value: "Vencido", label: "Vencido" },
+                { value: "Suspendido", label: "Suspendido" },
+                { value: "Cancelado", label: "Cancelado" },
+                { value: "En Trámite de Renovación", label: "En Trámite de Renovación" }
+              ]}
           />
-          <Input
-            label="Cargar archivo"
-            id="file"
-            name="file"
-            type="file"
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx"
-          />
+          <div>
+            {formData.file_name && !showFileInput ? (
+                <div className="flex items-center space-x-2 mb-2">
+                  <label className="block text-sm font-medium text-[#00632C] mb-1">
+                    {"Archivo: \n"}
+                  </label>
+                  <a
+                      href={`${API_BASE_URL}${formData.file_name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {"Ver archivo"}
+                  </a>
+                  <button
+                      type="button"
+                      onClick={handleDeleteFile}
+                      className="text-red-600 hover:text-red-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+            ) : (
+                showFileInput && (
+                    <InputField
+                        value=""
+                        label="Cargar archivo"
+                        placeholder="Seleccione un archivo PDF"
+                        name="file"
+                        type="file"
+                        onChange={handleFileChange}
+                        required={!editando}
+                        accept="application/pdf"
+                    />
+                )
+            )}
+          </div>
           <div className="w-full">
             <Button type="submit" className="w-full bg-[#FFD700] text-[#00632C] hover:bg-[#80C68C]">
               {editando ? 'Actualizar Registro' : 'Agregar Registro'}
@@ -346,33 +371,12 @@ export default function RegistroSanitarioComponent() {
       {/* Lista de registros sanitarios */}
       <div className="w-[65%] p-8">
         <h2 className="text-2xl font-bold mb-6 text-[#00632C]">Lista de Registro Sanitario</h2>
-
-        {/* Barra de búsqueda */}
-        <div className="relative mb-4">
-          <input
-            type="text"
-            placeholder="Buscar registro sanitario..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-4 pr-10 py-2 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#00632C] transition-colors"
-          />
-          <div 
-            className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
-            onClick={() => setSearchTerm('')}
-          >
-            {searchTerm ? (
-              <XIcon className="h-5 w-5 text-gray-400" />
-            ) : (
-              <SearchIcon className="h-5 w-5 text-gray-400" />
-            )}
-          </div>
-        </div>
-
+        <BarraBusqueda placeholder="Buscar Registro Sanitario" busqueda={busqueda} setBusqueda={handleBusqueda} />
         <div className="space-y-4">
           {error ? (
             <div className="text-red-500 text-center p-4">{error}</div>
-          ) : (
-            currentItems.map((registro) => (
+          ) : registrosPaginadas.length > 0 ? (
+              registrosPaginadas.map((registro) => (
               <div key={registro.uuid} className="bg-white p-4 rounded-lg shadow">
                 <div className="space-y-2">
                   <p className="font-bold text-[#00632C]">Número de registro: {registro.number_registry.toUpperCase()}</p>
@@ -388,7 +392,7 @@ export default function RegistroSanitarioComponent() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {registro.url.split('/').pop()}
+                        {"Ver Archivo"}
                       </a>
                     ) : (
                       <span className="text-gray-400">Sin archivo adjunto</span>
@@ -405,58 +409,15 @@ export default function RegistroSanitarioComponent() {
                 </div>
               </div>
             ))
+          ) : (
+              <div className="text-center text-gray-500">No hay registros sanitarios disponibles.</div>
           )}
         </div>
-
-        {/* Paginación */}
-        {!error && (
-          <div className="mt-4 flex justify-center items-center space-x-2">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Página anterior"
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </button>
-            {pageNumbers.map((number) => (
-              <button
-                key={number}
-                onClick={() => paginate(number)}
-                className={`${
-                  currentPage === number
-                    ? 'bg-[#00632C] text-white'
-                    : 'bg-white text-[#00632C] hover:bg-[#80C68C] hover:text-[#00632C]'
-                } border border-[#00632C] px-3 py-1 rounded-md`}
-              >
-                {number}
-              </button>
-            ))}
-            {totalPages > 4 && currentPage < totalPages - 2 && (
-              <>
-                <span>...</span>
-                <button
-                  onClick={() => paginate(totalPages)}
-                  className={`${
-                    currentPage === totalPages
-                      ? 'bg-[#00632C] text-white'
-                      : 'bg-white text-[#00632C] hover:bg-[#80C68C] hover:text-[#00632C]'
-                  } border border-[#00632C] px-3 py-1 rounded-md`}
-                >
-                  {totalPages}
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Página siguiente"
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+        <Paginacion
+            paginaActual={paginaActual}
+            totalPaginas={totalPaginas}
+            cambiarPagina={cambiarPagina}
+        />
       </div>
     </div>
   )

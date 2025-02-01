@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import AutocompleteSearch from "./AutocompleteSearch.tsx";
-import { API_BASE_URL } from "../../utils/ApiUrl.tsx";
+import { API_BASE_URL } from "../utils/ApiUrl.tsx";
 
 interface Brand {
     uuid: string;
