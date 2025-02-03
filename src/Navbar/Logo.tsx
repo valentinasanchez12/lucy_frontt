@@ -6,7 +6,7 @@ const Logo: React.FC = () => {
     <div className="flex items-center">
       <a href="/public" className="">
       <img 
-          src="/logo_grande.png"
+          src="/static/logo_grande.png"
           alt="Logo" 
           style={{
             width: 'auto',

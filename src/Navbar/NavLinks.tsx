@@ -1,16 +1,15 @@
-import React from 'react'
-import NavItem from './NavItem.tsx'
-import DropdownMenu from './DropdownMenu.tsx'
+import React from 'react';
+import NavItem from './NavItem.tsx';
+import DropdownMenu from './DropdownMenu.tsx';
 
 const NavLinks: React.FC = () => {
-  return (
-    <div className="hidden md:block">
-      <div className="ml-10 flex items-baseline space-x-4">
-        <NavItem href="/" text="Inicio" />
-        <DropdownMenu />
-      </div>
-    </div>
-  )
-}
+    return (
+        <div className="flex flex-col md:flex-row md:ml-10 md:space-x-4">
+            <NavItem href="/" text="Inicio" />
+            <NavItem href="/dashboard" text="Dashboard" />
+            <DropdownMenu />
+        </div>
+    );
+};
 
-export default NavLinks
+export default NavLinks;

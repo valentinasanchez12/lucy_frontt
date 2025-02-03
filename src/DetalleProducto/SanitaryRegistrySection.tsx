@@ -30,7 +30,7 @@ const SanitaryRegistrySection: React.FC<SanitaryRegistrySectionProps> = ({ regis
                                     rel="noopener noreferrer"
                                     className="text-[#00632C] hover:text-[#FFD700]"
                                 >
-                                    Documento
+                                    Ver Documento
                                 </a>
                             </p>
                         )}

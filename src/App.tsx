@@ -11,6 +11,7 @@ import RegistroSanitario from './Formularios/RegistrosSanitarios/RegistrosSanita
 import FormularioProducto from './Formularios/Productos/FormularioProducto'
 import FormularioEditarProducto from "./Formularios/Productos/FormularioEditarProducto.tsx";
 import ErrorBoundary from './components/ErrorBoundary';
+import Dashboard from "./Dashboard/Dashboard.tsx";
 
 
 const App: React.FC = () => {
@@ -23,6 +24,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path='/' element={<Inicio/>}/>
                 <Route path='/resultado' element={<ResultadosBusqueda/>}/>
+                <Route path='/dashboard' element={<Dashboard/>}/>
                 <Route path='/detalle/:uuid' element={<DetalleProducto/>}/>
                 <Route path='/formularios/marcas' element={<RegistroMarcas/>}/>
                 <Route path='/formularios/proveedores' element={<RegistroProveedores/>}/>
