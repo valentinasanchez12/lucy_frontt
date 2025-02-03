@@ -4,7 +4,7 @@ import React from 'react'
 const Logo: React.FC = () => {
   return (
     <div className="flex items-center">
-      <a href="/public" className="">
+      <a href="/" className="">
       <img 
           src="/static/logo_grande.png"
           alt="Logo" 
