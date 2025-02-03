@@ -308,7 +308,7 @@ const DocumentSection = ({title, documents}: DocumentSectionProps) => {
                             rel="noopener noreferrer"
                             className="text-[#00632C] hover:text-[#FFD700]"
                         >
-                          {`Documento ${Number(index ?? 0) + 1}`}
+                          {`Ver Documento ${Number(index ?? 0) + 1}`}
                         </a>
                       </div>
                     </li>
