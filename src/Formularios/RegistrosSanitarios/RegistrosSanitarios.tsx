@@ -146,6 +146,10 @@ export default function RegistroSanitarioComponent() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleSelectChange = (name: string) => (option: any) => {
+    setFormData((prev) => ({ ...prev, [name]: option.value }))
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -285,7 +289,7 @@ export default function RegistroSanitarioComponent() {
               label="Grupo"
               name="cluster"
               value={formData.cluster}
-              onChange={handleInputChange}
+              onChange={handleSelectChange("cluster")}
               placeholder="Seleccione un grupo"
               options={[
                 { value: "No requiere", label: "No requiere" },
@@ -313,7 +317,7 @@ export default function RegistroSanitarioComponent() {
               label="Estado del registro"
               name="status"
               value={formData.status}
-              onChange={handleInputChange}
+              onChange={handleSelectChange("status")}
               options={[
                 { value: "No requiere", label: "No requiere" },
                 { value: "Vigente", label: "Vigente" },
