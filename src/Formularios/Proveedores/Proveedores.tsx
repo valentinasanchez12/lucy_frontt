@@ -338,7 +338,7 @@ export default function RegistroProveedores() {
                   placeholder="Seleccione un tipo"
                   name="tipoPersona"
                   value={formData.tipoPersona}
-                  onChange={handleSelectChange}
+                  onChange={handleSelectChange("tipoPersona")}
                   options={[
                       { value: 'Persona Natural', label: 'Persona Natural' },
                       { value: 'Persona Jurídica', label: 'Persona Jurídica' },
