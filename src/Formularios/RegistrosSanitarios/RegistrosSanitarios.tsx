@@ -5,6 +5,7 @@ import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
 import Paginacion from "../../components/Paginacion/Paginacion.tsx";
 import InputField from "../../components/ui/InputFile.tsx";
 import SelectField from "../../components/ui/SelectField.tsx";
+import Toast from "../../components/ui/Toast.tsx";
 
 // Definición de tipos
 interface RegistroSanitario {
@@ -123,9 +124,9 @@ export default function RegistroSanitarioComponent() {
   const [editando, setEditando] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
-  const [error, setError] = useState<string | null>(null)
   const itemsPorPagina = 3
   const [showFileInput, setShowFileInput] = useState<boolean>(true);
+  const [toastMessage, setToastMessage] = useState<{ message: string; color?: string } | null>(null)
 
   const handleBusqueda = (nuevaBusqueda: string) => {
     setBusqueda(nuevaBusqueda)
@@ -137,9 +138,18 @@ export default function RegistroSanitarioComponent() {
       .then(setRegistros)
       .catch(err => {
         console.error('Error fetching registros:', err);
-        setError('Error al cargar los registros sanitarios. Por favor, intente de nuevo más tarde.');
+        setToastMessage({ message: 'Error al cargar los registros sanitarios. Por favor, intente de nuevo más tarde.' });
       });
   }, [])
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -195,14 +205,20 @@ export default function RegistroSanitarioComponent() {
         const updatedRegistro = await updateRegistroSanitario(editando, lowercaseFormData)
         setRegistros(registros.map(r => r.uuid === editando ? updatedRegistro : r))
         setEditando(null)
+        setToastMessage({ message: 'Registro actualizado correctamente', color:"bg-green-500" })
       } else {
         const newRegistro = await createRegistroSanitario(lowercaseFormData)
         setRegistros([...registros, newRegistro])
+        setToastMessage({ message: 'Registro creado correctamente', color:"bg-green-500" })
       }
       resetForm()
     } catch (error) {
       console.error('Error al guardar el registro:', error)
-      setError('Error al guardar el registro. Por favor, intente de nuevo.')
+      if (error instanceof Error) {
+        setToastMessage({ message: `Error al guardar el registro. ${error.message}` })
+      } else {
+        setToastMessage({ message: "Error desconocida. Por favor ponerse en contacto con el administrador" })
+      }
     }
   }
 
@@ -215,7 +231,8 @@ export default function RegistroSanitarioComponent() {
       type_risk: '',
       file_name: '',
       file_content: '',
-    })
+    });
+    setShowFileInput(true);
   }
 
   const iniciarEdicion = (registro: RegistroSanitario) => {
@@ -238,7 +255,7 @@ export default function RegistroSanitarioComponent() {
       setRegistros(registros.filter(registro => registro.uuid !== uuid))
     } catch (error) {
       console.error('Error al eliminar el registro:', error)
-      setError('Error al eliminar el registro. Por favor, intente de nuevo.')
+      setToastMessage({ message: 'Error al eliminar el registro. Por favor, intente de nuevo.' })
     }
   }
 
@@ -261,9 +278,10 @@ export default function RegistroSanitarioComponent() {
   }, [busqueda])
 
   return (
-    <div className="flex h-screen bg-[#eeeeee]">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#eeeeee]">
+      {toastMessage && <Toast message={toastMessage.message} color={toastMessage.color} />}
       {/* Formulario */}
-      <div className="w-[35%] p-8 bg-white">
+      <div className="w-full lg:w-2/5 p-6 bg-white order-1 lg:order-none overflow-auto lg:overflow-visible">
         <h2 className="text-2xl font-bold mb-6 text-[#00632C]">
           {editando ? 'Editar Registro Sanitario' : 'Nuevo Registro Sanitario'}
         </h2>
@@ -304,6 +322,7 @@ export default function RegistroSanitarioComponent() {
                 { value: "Fitoterapéutico", label: "Fitoterapéutico" },
                 { value: "Biológicos", label: "Biológicos" }
               ]}
+              required
           />
           <InputField
             label="Tipo de riesgo"
@@ -311,6 +330,7 @@ export default function RegistroSanitarioComponent() {
             value={formData.type_risk}
             onChange={handleInputChange}
             placeholder="Ingrese el tipo de riesgo"
+            required
           />
           <SelectField
               placeholder="Seleccione un estado"
@@ -326,6 +346,7 @@ export default function RegistroSanitarioComponent() {
                 { value: "Cancelado", label: "Cancelado" },
                 { value: "En Trámite de Renovación", label: "En Trámite de Renovación" }
               ]}
+              required
           />
           <div>
             {formData.file_name && !showFileInput ? (
@@ -373,13 +394,11 @@ export default function RegistroSanitarioComponent() {
       </div>
 
       {/* Lista de registros sanitarios */}
-      <div className="w-[65%] p-8">
+      <div className="w-full lg:w-3/5 p-6 overflow-auto max-h-[calc(100vh-24rem)] lg:max-h-screen order-2 lg:order-none">
         <h2 className="text-2xl font-bold mb-6 text-[#00632C]">Lista de Registro Sanitario</h2>
         <BarraBusqueda placeholder="Buscar Registro Sanitario" busqueda={busqueda} setBusqueda={handleBusqueda} />
         <div className="space-y-4">
-          {error ? (
-            <div className="text-red-500 text-center p-4">{error}</div>
-          ) : registrosPaginadas.length > 0 ? (
+          {registrosPaginadas.length > 0 ? (
               registrosPaginadas.map((registro) => (
               <div key={registro.uuid} className="bg-white p-4 rounded-lg shadow">
                 <div className="space-y-2">

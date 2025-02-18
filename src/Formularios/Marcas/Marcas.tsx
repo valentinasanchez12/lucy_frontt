@@ -3,6 +3,7 @@ import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
 import Paginacion from "../../components/Paginacion/Paginacion.tsx";
 import InputField from "../../components/ui/InputFile.tsx";
+import Toast from "../../components/ui/Toast.tsx";
 
 interface Marca {
   uuid: string;
@@ -43,43 +44,7 @@ const FormularioMarca: React.FC<{
     </form>
   </div>
 )
-/*
-// Componente para la barra de búsqueda
-const BarraBusqueda: React.FC<{
-  busqueda: string;
-  setBusqueda: (busqueda: string) => void;
-}> = ({ busqueda, setBusqueda }) => {
-  const handleReset = () => {
-    setBusqueda('');
-  };
-  return (
-    <div className="mb-4 relative">
-      <input
-        type="text"
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar marca"
-        className="w-full pl-10 pr-4 py-2 border border-[#80C68C] rounded-full focus:outline-none focus:ring-2 focus:ring-[#00632C]"
-      />
-      {busqueda ? (
-        <button
-          onClick={handleReset}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00632C] hover:text-[#004d22]"
-          aria-label="Limpiar búsqueda"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-[#00632C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      )}
-    </div>
-  );
-};
-*/
+
 // Componente para cada item de marca en la lista
 const MarcaItem: React.FC<{
   marca: Marca;
@@ -110,57 +75,14 @@ const MarcaItem: React.FC<{
     </div>
   </div>
 )
-/*
-// Componente para la paginación
-const Paginacion: React.FC<{
-  paginaActual: number;
-  totalPaginas: number;
-  cambiarPagina: (pagina: number) => void;
-}> = ({ paginaActual, totalPaginas, cambiarPagina }) => (
-  <div className="mt-4 flex justify-center items-center space-x-2">
-    <button
-      onClick={() => cambiarPagina(paginaActual - 1)}
-      disabled={paginaActual === 1}
-      className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-      aria-label="Página anterior"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-      </svg>
-    </button>
-    {[...Array(totalPaginas)].map((_, index) => (
-      <button
-        key={index}
-        onClick={() => cambiarPagina(index + 1)}
-        className={`${
-          paginaActual === index + 1
-            ? 'bg-[#00632C] text-white'
-            : 'bg-white text-[#00632C] hover:bg-[#80C68C] hover:text-[#00632C]'
-        } border border-[#00632C] px-3 py-1 rounded-md`}
-      >
-        {index + 1}
-      </button>
-    ))}
-    <button
-      onClick={() => cambiarPagina(paginaActual + 1)}
-      disabled={paginaActual === totalPaginas}
-      className="bg-white hover:bg-[#80C68C] text-[#00632C] hover:text-[#00632C] border border-[#00632C] p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-      aria-label="Página siguiente"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-      </svg>
-    </button>
-  </div>
-)
-*/
+
 // Componente principal
 export default function RegistroMarcas() {
   const [marcas, setMarcas] = useState<Marca[]>([])
   const [nombreMarca, setNombreMarca] = useState('')
   const [editando, setEditando] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<{ message: string; color?: string } | null>(null)
   const [paginaActual, setPaginaActual] = useState(1)
   const itemsPorPagina = 8
 
@@ -172,6 +94,15 @@ export default function RegistroMarcas() {
   useEffect(() => {
     fetchMarcas()
   }, [])
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
 
   const fetchMarcas = async () => {
     try {
@@ -185,7 +116,7 @@ export default function RegistroMarcas() {
         nombre: marca.name || ''
       })))
     } catch (error) {
-      setError('Error fetching brands')
+      setToastMessage({ message: 'Error fetching brands'})
       console.error('Error fetching brands:', error)
     }
   }
@@ -211,6 +142,7 @@ export default function RegistroMarcas() {
           setMarcas(marcas.map(marca => 
             marca.uuid === editando ? { ...marca, nombre: updatedBrand.data.name } : marca
           ))
+          setToastMessage({ message: 'Marca actualizada correctamente', color: 'bg-green-500' })
           setEditando(null)
         } else {
           // Create new brand
@@ -228,9 +160,9 @@ export default function RegistroMarcas() {
           setMarcas([...marcas, { uuid: newBrand.data.uuid, nombre: newBrand.data.name || '' }])
         }
         setNombreMarca('')
-        setError(null)
+        setToastMessage({ message: 'Marca agregada correctamente', color: 'bg-green-500' })
       } catch (error) {
-        setError('Error adding/updating brand')
+        setToastMessage({ message: editando ? 'Error al actualizar la marca': 'Error al crear la marca' })
         console.error('Error adding/updating brand:', error)
       }
     }
@@ -254,9 +186,8 @@ export default function RegistroMarcas() {
           throw new Error('Failed to delete brand')
         }
         setMarcas(marcas.filter(marca => marca.uuid !== uuid))
-        setError(null)
       } catch (error) {
-        setError('Error deleting brand')
+        setToastMessage({ message: 'Error al eliminar la marca' })
         console.error('Error deleting brand:', error)
       }
     }
@@ -280,8 +211,9 @@ export default function RegistroMarcas() {
   }, [busqueda])
 
   return (
-    <div className="flex h-screen bg-[#eeeeee]">
-      <div className="w-[30%] bg-white">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#eeeeee]">
+      {toastMessage && <Toast message={toastMessage.message} color={toastMessage.color} />}
+      <div className="w-full lg:w-2/5 p-6 bg-white order-1 lg:order-none overflow-auto lg:overflow-visible">
         <div className="p-8">
           <FormularioMarca
             nombreMarca={nombreMarca}
@@ -291,10 +223,9 @@ export default function RegistroMarcas() {
           />
         </div>
       </div>
-      <div className="w-[70%] p-8">
+      <div className="w-full lg:w-3/5 p-6 overflow-auto max-h-[calc(100vh-24rem)] lg:max-h-screen order-2 lg:order-none">
         <h2 className="text-2xl font-bold mb-4 text-[#00632C]">Lista de Marcas</h2>
         <BarraBusqueda placeholder="Buscar Marcas" busqueda={busqueda} setBusqueda={handleBusqueda} />
-        {error && <div className="text-red-500 mb-4">{error}</div>}
         <div className="space-y-4">
           {marcasPaginadas.map(marca => (
             <MarcaItem

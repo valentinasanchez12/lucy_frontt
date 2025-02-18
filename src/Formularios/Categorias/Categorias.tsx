@@ -5,6 +5,7 @@ import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 import BarraBusqueda from "../../components/Busqueda/BarraBusqueda.tsx";
 import Paginacion from "../../components/Paginacion/Paginacion.tsx";
 import InputField from "../../components/ui/InputFile.tsx";
+import Toast from "../../components/ui/Toast.tsx";
 
 interface Categoria {
   uuid: string;
@@ -89,25 +90,25 @@ export default function RegistroCategorias() {
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<{ message: string; color?: string } | null>(null)
   const itemsPorPagina = 7
 
   const fetchCategorias = useCallback(async () => {
     setIsLoading(true)
-    setError(null)
     try {
       const response = await fetch(`${API_BASE_URL}/api/category/`)
       if (!response.ok) {
+        setToastMessage({message: `HTTP error! status: ${response.status}`})
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const responseData = await response.json()
       if (!responseData.success || !Array.isArray(responseData.data)) {
-        throw new Error('La respuesta del servidor no tiene el formato esperado')
+        setToastMessage({message: 'La respuesta del servidor no tiene el formato esperado'})
       }
       setCategorias(responseData.data)
     } catch (err) {
       console.error('Error detallado:', err)
-      setError(err instanceof Error ? err.message : 'Error desconocido al cargar las categorías')
+      setToastMessage({message: 'Error desconocido al cargar las categorías'})
     } finally {
       setIsLoading(false)
     }
@@ -121,7 +122,6 @@ export default function RegistroCategorias() {
     e.preventDefault()
     if (nombreCategoria.trim()) {
       setIsLoading(true)
-      setError(null)
       try {
         let response;
         let newCategory: Categoria;
@@ -140,6 +140,7 @@ export default function RegistroCategorias() {
           setCategorias(prevCategorias => 
             prevCategorias.map(cat => cat.uuid === editando ? newCategory : cat)
           )
+          setToastMessage({message: 'Categoría actualizada correctamente', color: 'bg-green-500'})
         } else {
           response = await fetch(`${API_BASE_URL}/api/category/`, {
             method: 'POST',
@@ -148,16 +149,16 @@ export default function RegistroCategorias() {
             },
             body: JSON.stringify({ name: nombreEnMinusculas }),
           })
-          if (!response.ok) throw new Error('Error al agregar la categoría')
+          if (!response.ok) setToastMessage({message: 'Error al agregar la categoría'})
           const data = await response.json()
           newCategory = data.data
           setCategorias(prevCategorias => [...prevCategorias, newCategory])
+          setToastMessage({message: 'Categoría agregada correctamente', color: 'bg-green-500'})
         }
-
         setNombreCategoria('')
         setEditando(null)
       } catch (err) {
-        setError(editando ? 'Error al actualizar la categoría' : 'Error al agregar la categoría')
+        setToastMessage({message: editando ? 'Error al actualizar la categoría' : 'Error al agregar la categoría'})
         console.error(err)
       } finally {
         setIsLoading(false)
@@ -175,19 +176,18 @@ export default function RegistroCategorias() {
 
   const eliminarCategoria = useCallback(async (uuid: string) => {
     setIsLoading(true)
-    setError(null)
     try {
       const response = await fetch(`${API_BASE_URL}/api/category/${uuid}`, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
-        throw new Error('Error al eliminar la categoría')
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
       setCategorias(prevCategorias => prevCategorias.filter(categoria => categoria.uuid !== uuid))
     } catch (err) {
-      setError('Error al eliminar la categoría')
+        setToastMessage({message: 'Error al eliminar la categoría'})
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -221,9 +221,19 @@ export default function RegistroCategorias() {
     setPaginaActual(1)
   }, [busqueda])
 
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
+
   return (
-    <div className="flex h-screen bg-[#eeeeee]">
-      <div className="w-[30%] bg-white">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#eeeeee]">
+      {toastMessage && <Toast message={toastMessage.message} color={toastMessage.color} />}
+      <div className="w-full lg:w-2/5 p-6 bg-white order-1 lg:order-none overflow-auto lg:overflow-visible">
         <div className="p-8">
           <FormularioCategoria
             nombreCategoria={nombreCategoria}
@@ -234,10 +244,9 @@ export default function RegistroCategorias() {
           />
         </div>
       </div>
-      <div className="w-[70%] p-8">
+      <div className="w-full lg:w-3/5 p-6 overflow-auto max-h-[calc(100vh-24rem)] lg:max-h-screen order-2 lg:order-none">
         <h2 className="text-2xl font-bold mb-4 text-[#00632C]">Lista de Categorías</h2>
         <BarraBusqueda placeholder="Buscar categoría" busqueda={busqueda} setBusqueda={setBusqueda} />
-        {error && <div className="text-red-500 mb-4">{error}</div>}
         <div className="space-y-4">
           {categoriasPaginadas.map(categoria => (
             <CategoriaItem

@@ -17,11 +17,11 @@ const DropdownMenu: React.FC = () => {
       {isOpen && (
         <div className="absolute z-10 left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
           <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-            <Link to="/formularios/marcas" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Marcas</Link>
-            <Link to="/formularios/proveedores" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Proveedores</Link>
-            <Link to="/formularios/categorias" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Categorías</Link>
-            <Link to="/formularios/registros-sanitarios" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Registro Sanitario</Link>
-            <Link to="/formularios/productos" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Productos</Link>
+            <Link onClick={() => setIsOpen(!isOpen)} to="/formularios/marcas" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Marcas</Link>
+            <Link onClick={() => setIsOpen(!isOpen)} to="/formularios/proveedores" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Proveedores</Link>
+            <Link onClick={() => setIsOpen(!isOpen)} to="/formularios/categorias" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Categorías</Link>
+            <Link onClick={() => setIsOpen(!isOpen)} to="/formularios/registros-sanitarios" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Registro Sanitario</Link>
+            <Link onClick={() => setIsOpen(!isOpen)} to="/formularios/productos" className="block px-4 py-2 text-sm text-[#333333] hover:bg-[#80C68C]">Productos</Link>
           </div>
         </div>
       )}

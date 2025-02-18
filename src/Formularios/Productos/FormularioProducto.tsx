@@ -588,7 +588,7 @@ const FormularioProductoInterno: React.FC = () => {
                       />
                     </div>
                     <div className="flex-1">
-                      <InputField
+                      <TextareaField
                           label="Descripción de la Característica"
                           name={`characteristic-description-${index}`}
                           value={characteristic.description}
