@@ -534,7 +534,6 @@ export default function RegistroProveedores() {
                           name="file"
                           type="file"
                           onChange={handleFileChange}
-                          required={!editingId}
                           accept="application/pdf"
                       />
                   )
