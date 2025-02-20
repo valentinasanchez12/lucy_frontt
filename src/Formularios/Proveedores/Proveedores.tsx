@@ -8,6 +8,7 @@ import Paginacion from "../../components/Paginacion/Paginacion.tsx"
 import InputField from "../../components/ui/InputFile.tsx"
 import SelectField from "../../components/ui/SelectField.tsx"
 import Toast from "../../components/ui/Toast"
+import { X } from "lucide-react"
 
 type Proveedor = {
   id: string
@@ -18,6 +19,8 @@ type Proveedor = {
   telefono: string
   email: string
   marcas: Array<{ uuid: string; name: string }>
+  certificate_url?: string
+  file_content?: string // Add this field
 }
 
 type ApiProveedor = {
@@ -32,6 +35,7 @@ type ApiProveedor = {
     uuid: string
     name: string
   }>
+  certificate_url?: string // Add this new field
 }
 
 type Brand = {
@@ -50,6 +54,8 @@ const emptyFormData: Omit<Proveedor, "id"> = {
   telefono: "",
   email: "",
   marcas: [],
+  certificate_url: "",
+  file_content: "", // Add this field
 }
 
 const capitalizeWords = (str: string) => {
@@ -73,6 +79,8 @@ export default function RegistroProveedores() {
   const [paginaActual, setPaginaActual] = useState(1)
   const [toastMessage, setToastMessage] = useState<{ message: string; color?: string } | null>(null)
   const itemsPorPagina = 4
+  const [showFileInput, setShowFileInput] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchProveedores()
@@ -116,6 +124,7 @@ export default function RegistroProveedores() {
           telefono: apiProveedor.phone,
           email: apiProveedor.email,
           marcas: apiProveedor.brands,
+          certificate_url: apiProveedor.certificate_url,
         }))
         setProveedores(formattedProveedores)
       } else {
@@ -184,9 +193,33 @@ export default function RegistroProveedores() {
     setFormData((prev) => ({ ...prev, marcas: prev.marcas.filter((m) => m.uuid !== uuid) }))
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      if (file.type !== "application/pdf") {
+        alert("Solo se permiten archivos PDF.")
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setFormData((prev) => ({
+          ...prev,
+          file_content: base64String.split(",")[1], // Remove data:application/pdf;base64, from the string
+          certificate_url: file.name, // Use this as file_name when submitting
+        }))
+        setShowFileInput(false)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newProvider = {
+
+    // Add all the provider data
+    const providerData = {
       name: formData.empresa.toLowerCase(),
       nit: formData.nit.toLowerCase(),
       types_person: formData.tipoPersona,
@@ -194,6 +227,20 @@ export default function RegistroProveedores() {
       phone: formData.telefono,
       email: formData.email.toLowerCase(),
       brands: formData.marcas.map((marca) => ({ uuid: marca.uuid, name: marca.name.toLowerCase() })),
+    }
+
+    // Create the request body
+    const requestBody: any = {
+      ...providerData,
+    }
+
+    // Add file data if present
+    if (formData.file_content) {
+      requestBody.file_name = formData.certificate_url // Use certificate_url as file_name
+      requestBody.file_content = formData.file_content
+    } else if (editingId && formData.certificate_url) {
+      // If editing and no new file selected, send only the existing certificate_url as file_name
+      requestBody.file_name = formData.certificate_url
     }
 
     try {
@@ -205,16 +252,29 @@ export default function RegistroProveedores() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newProvider),
+        body: JSON.stringify(requestBody),
       })
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
+
       const data = await response.json()
-      console.log("API Response:", data)
+
       if (data.success) {
         if (editingId) {
-          setProveedores((prev) => prev.map((p) => (p.id === editingId ? { ...formData, id: editingId } : p)))
+          const updatedProveedor: Proveedor = {
+            id: data.data.uuid,
+            empresa: data.data.name,
+            tipoPersona: data.data.types_person,
+            nit: data.data.nit,
+            asesor: data.data.represent,
+            telefono: data.data.phone,
+            email: data.data.email,
+            marcas: data.data.brands,
+            certificate_url: data.data.certificate_url,
+          }
+          setProveedores((prev) => prev.map((p) => (p.id === editingId ? updatedProveedor : p)))
           setEditingId(null)
           setToastMessage({ message: "Proveedor actualizado correctamente", color: "bg-green-500" })
         } else {
@@ -227,11 +287,17 @@ export default function RegistroProveedores() {
             telefono: data.data.phone,
             email: data.data.email,
             marcas: data.data.brands,
+            certificate_url: data.data.certificate_url,
           }
           setProveedores((prev) => [...prev, newProveedor])
           setToastMessage({ message: "Proveedor registrado correctamente", color: "bg-green-500" })
         }
+        // Reset form and file state
         setFormData(emptyFormData)
+        setShowFileInput(true)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
       } else {
         setToastMessage({ message: data.response || "Failed to save provider" })
       }
@@ -242,7 +308,6 @@ export default function RegistroProveedores() {
       } else {
         setToastMessage({ message: "Unknown error saving provider" })
       }
-      console.error("Error details:", JSON.stringify(error, null, 2))
     }
   }
 
@@ -274,8 +339,27 @@ export default function RegistroProveedores() {
   }
 
   const handleEdit = (proveedor: Proveedor) => {
-    setFormData(proveedor)
+    setFormData({
+      ...proveedor,
+      file_content: "", // Initialize with empty file_content
+    })
     setEditingId(proveedor.id)
+    setShowFileInput(!proveedor.certificate_url)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      certificate_url: "",
+      file_content: "", // Also clear file_content
+    }))
+    setShowFileInput(true)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   const proveedoresFiltrados = proveedores.filter(
@@ -306,7 +390,7 @@ export default function RegistroProveedores() {
 
   useEffect(() => {
     setPaginaActual(1)
-  }, [busqueda]) //This line was already correct. No changes needed.
+  }, [])
 
   return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-[#eeeeee]">
@@ -425,6 +509,37 @@ export default function RegistroProveedores() {
               </span>
               ))}
             </div>
+            <div>
+              {formData.certificate_url && !showFileInput ? (
+                  <div className="flex items-center space-x-2 mb-2">
+                    <label className="block text-sm font-medium text-[#00632C] mb-1">{"Archivo: \n"}</label>
+                    <a
+                        href={`${API_BASE_URL}${formData.certificate_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      {"Ver archivo"}
+                    </a>
+                    <button type="button" onClick={handleRemoveFile} className="text-red-600 hover:text-red-800">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+              ) : (
+                  showFileInput && (
+                      <InputField
+                          value=""
+                          label="Certificado de distribución"
+                          placeholder="Seleccione un archivo PDF"
+                          name="file"
+                          type="file"
+                          onChange={handleFileChange}
+                          required={!editingId}
+                          accept="application/pdf"
+                      />
+                  )
+              )}
+            </div>
             <button
                 type="submit"
                 className="w-full bg-[#FFD700] text-[#00632C] hover:bg-[#00632C] hover:text-white py-2 px-4 rounded-md transition duration-300"
@@ -459,6 +574,21 @@ export default function RegistroProveedores() {
                       </p>
                       <p className="text-[#333333]">
                         <strong>Marcas:</strong> {proveedor.marcas.map((marca) => capitalizeWords(marca.name)).join(", ")}
+                      </p>
+                      <p className="text-[#333333]">
+                        <strong>Certificado:</strong>{" "}
+                        {proveedor.certificate_url ? (
+                            <a
+                                href={`${API_BASE_URL}${proveedor.certificate_url}`}
+                                className="text-[#00632C] hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                              {"Ver Archivo"}
+                            </a>
+                        ) : (
+                            <span className="text-gray-400">Sin archivo adjunto</span>
+                        )}
                       </p>
                     </div>
                     <div className="flex flex-col justify-end space-y-2 ml-4">
