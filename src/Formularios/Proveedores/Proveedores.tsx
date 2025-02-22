@@ -187,6 +187,7 @@ export default function RegistroProveedores() {
       }))
     }
     setSearchTerm("")
+    setIsDropdownOpen(false)
   }
 
   const handleRemoveMarca = (uuid: string) => {
