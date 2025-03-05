@@ -1,12 +1,13 @@
 import type React from "react"
 import { useState, useCallback, useEffect } from "react"
 import { QueryClient, QueryClientProvider, useQuery } from "react-query"
-import Select from "react-select"
 import { useDropzone } from "react-dropzone"
 import { X, Plus } from "lucide-react"
 import { useParams } from "react-router-dom"
 import {API_BASE_URL} from "../../utils/ApiUrl.tsx";
 import TextareaField from "../../components/ui/TextareaField.tsx";
+import InputField from "../../components/ui/InputFile.tsx";
+import SelectField from "../../components/ui/SelectField.tsx";
 
 // Create a client
 const queryClient = new QueryClient()
@@ -65,69 +66,6 @@ type TechnicalSheetData = {
     url: string | null
     isDeleted: boolean
 }
-
-// Components
-const InputField: React.FC<{
-    label: string
-    name: string
-    value: string
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-    placeholder: string
-    isTextarea?: boolean
-}> = ({ label, name, value, onChange, placeholder, isTextarea = false }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-[#00632C] mb-1">
-            {label}
-        </label>
-        {isTextarea ? (
-            <textarea
-                id={name}
-                name={name}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                rows={4}
-                className="w-full p-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00873D]"
-            />
-        ) : (
-            <input
-                type="text"
-                id={name}
-                name={name}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                className="w-full p-2 border border-[#80C68C] rounded-md focus:outline-none focus:ring-2 focus:ring-[#00873D]"
-            />
-        )}
-    </div>
-)
-
-const SelectField: React.FC<{
-    label: string
-    name: string
-    options: Option[]
-    onChange: (option: any) => void
-    placeholder: string
-    value: string
-    isMulti?: boolean
-}> = ({ label, name, options, onChange, placeholder, value, isMulti = false }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-[#00632C] mb-1">
-            {label}
-        </label>
-        <Select
-            options={options}
-            placeholder={placeholder}
-            styles={customSelectStyles}
-            onChange={onChange}
-            isMulti={isMulti}
-            className="react-select-container"
-            classNamePrefix="react-select"
-            value={options.find((option) => option.value === value)}
-        />
-    </div>
-)
 
 const ImageDropzone: React.FC<{
     onDrop: (acceptedFiles: File[]) => void
@@ -244,41 +182,6 @@ const ErrorMessage: React.FC<{ message: string; onDismiss: () => void }> = ({ me
     </div>
 )
 
-// Styles for selects
-const customSelectStyles = {
-    control: (provided: any) => ({
-        ...provided,
-        borderColor: "#80C68C",
-        "&:hover": {
-            borderColor: "#00873D",
-        },
-    }),
-    option: (provided: any, state: { isSelected: any }) => ({
-        ...provided,
-        backgroundColor: state.isSelected ? "#00873D" : "white",
-        color: state.isSelected ? "white" : "#333333",
-        "&:hover": {
-            backgroundColor: "#00632C",
-            color: "white",
-        },
-    }),
-    multiValue: (provided: any) => ({
-        ...provided,
-        backgroundColor: "#80C68C",
-    }),
-    multiValueLabel: (provided: any) => ({
-        ...provided,
-        color: "#333333",
-    }),
-    multiValueRemove: (provided: any) => ({
-        ...provided,
-        color: "#333333",
-        "&:hover": {
-            backgroundColor: "#00632C",
-            color: "white",
-        },
-    }),
-}
 
 const capitalizeWords = (str: string) => {
     return str.replace(/\b\p{L}[\p{L}'-]*\b/gu, (word) => {
@@ -648,6 +551,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             value={producto.nombreGenerico}
                             onChange={handleInputChange}
                             placeholder="Ingrese el nombre genérico"
+                            required
                         />
                         <InputField
                             label="Nombre Comercial"
@@ -655,16 +559,17 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             value={producto.nombreComercial}
                             onChange={handleInputChange}
                             placeholder="Ingrese el nombre comercial"
+                            required
                         />
                     </div>
 
-                    <InputField
+                    <TextareaField
                         label="Descripción"
                         name="descripcion"
                         value={producto.descripcion}
                         onChange={handleInputChange}
                         placeholder="Ingrese la descripción del producto"
-                        isTextarea
+                        required
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -674,6 +579,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             value={producto.unidadMedida}
                             onChange={handleInputChange}
                             placeholder="Ej: kg, litros, unidades"
+                            required
                         />
                         <InputField
                             label="Presentación"
@@ -681,16 +587,17 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             value={producto.presentacion}
                             onChange={handleInputChange}
                             placeholder="Ej: Caja de 10 unidades"
+                            required
                         />
                     </div>
 
-                    <InputField
+                    <TextareaField
                         label="Composición"
                         name="composicion"
                         value={producto.composicion}
                         onChange={handleInputChange}
                         placeholder="Ingrese la composición del producto"
-                        isTextarea
+                        required
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -700,6 +607,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             value={producto.referencia}
                             onChange={handleInputChange}
                             placeholder="Ingrese la referencia"
+                            required
                         />
                         <TextareaField
                             label="Uso"
@@ -707,6 +615,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             value={producto.uso}
                             onChange={handleInputChange}
                             placeholder="Ingrese el uso del producto"
+                            required
                         />
                     </div>
                     <InputField
@@ -715,6 +624,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                         value={producto.metodoEsterilizar}
                         onChange={handleInputChange}
                         placeholder="Ingrese el método de esterilización"
+                        required
                     />
                     <ImageDropzone
                         onDrop={onDropImages}
@@ -731,6 +641,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             options={marcas}
                             onChange={handleSelectChange("marca")}
                             placeholder="Seleccione una marca"
+                            required
                             value={producto.marca}
                         />
                         <SelectField
@@ -739,6 +650,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             options={categorias}
                             onChange={handleSelectChange("categoria")}
                             placeholder="Seleccione una categoría"
+                            required
                             value={producto.categoria}
                         />
                     </div>
@@ -795,6 +707,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                             options={registrosSanitarios}
                             onChange={handleSelectChange("registroSanitario")}
                             placeholder="Seleccione un registro sanitario"
+                            required
                             value={producto.registroSanitario}
                         />
                     </div>
@@ -826,7 +739,7 @@ const FormularioEditarProductoInterno: React.FC = () => {
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <InputField
+                                    <TextareaField
                                         label="Descripción de la Característica"
                                         name={`characteristic-description-${index}`}
                                         value={characteristic.description}
